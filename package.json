@@ -5,11 +5,25 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps",
+    "preinstall": "npx npm-force-resolutions"
   },
+  "main": "background.js",
   "dependencies": {
+    "@types/swiper": "^5.3.0",
+    "ant-design-vue": "^1.5.4",
+    "axios": "^0.19.2",
     "core-js": "^3.6.4",
+    "moment": "^2.25.1",
+    "nedb-promises": "^4.0.3",
+    "nodejieba": "^2.4.1",
+    "swiper": "^5.3.8",
     "vue": "^2.6.11",
+    "vue-awesome-swiper": "^4.1.1",
     "vue-class-component": "^7.2.3",
     "vue-property-decorator": "^8.4.1",
     "vue-router": "^3.1.6"
@@ -24,14 +38,20 @@
     "@vue/cli-service": "~4.3.0",
     "@vue/eslint-config-prettier": "^6.0.0",
     "@vue/eslint-config-typescript": "^5.0.2",
+    "electron": "^6.0.0",
     "eslint": "^6.7.2",
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-vue": "^6.2.2",
     "less": "^3.0.4",
     "less-loader": "^5.0.0",
+    "npm-force-resolutions": "0.0.3",
     "prettier": "^1.19.1",
     "typescript": "~3.8.3",
+    "vue-cli-plugin-electron-builder": "^1.4.6",
     "vue-template-compiler": "^2.6.11"
+  },
+  "resolutions": {
+    "moment": "2.24.0"
   },
   "eslintConfig": {
     "root": true,
@@ -47,8 +67,7 @@
     ],
     "parserOptions": {
       "ecmaVersion": 2020
-    },
-    "rules": {}
+    }
   },
   "browserslist": [
     "> 1%",
