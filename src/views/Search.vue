@@ -12,6 +12,7 @@
       <a-icon type="setting" class="filter-icon" />
     </div>
     <a-list
+      ref="list"
       item-layout="vertical"
       size="large"
       :pagination="pagination"
@@ -124,7 +125,7 @@
 
 <script>
 // @ is an alias to /src
-import { getPostList } from "../services/zhihu";
+import { getPostList, getSettingForm } from "../services/zhihu";
 import { shell } from "electron";
 export default {
   name: "AttentionPage",
@@ -133,10 +134,12 @@ export default {
     return {
       showFilterModal: false,
       list: [],
+      index: 1,
       fliterForm: {
         keywords: [],
         gender: 1
       },
+      settingUpdateTime: 0,
       labelCol: { span: 5 },
       wrapperCol: { span: 18 },
       recommendKeywords: ["天津", "双子座"],
@@ -151,16 +154,34 @@ export default {
         // Some Swiper option/callback...
       },
       pagination: {
+        current: 1,
         onChange: () => {
           // 回到顶部
           document.getElementById("scroller").scrollTop = 0;
         },
-        pageSize: 30
+        pageSize: 10
       }
     };
   },
-  async created() {
-    await this.reload();
+  async activated() {
+    // 判断是否发生数据改变
+    const settingForm = await getSettingForm();
+    // 如果setting都不存在那么也不用请求数据了，说明是第一次进入
+    if (!settingForm) {
+      return;
+    }
+    // 判断搜索条件是否发生改变
+    const changeSettingForm = settingForm.updated !== this.settingUpdateTime;
+    if (changeSettingForm) {
+      await this.reload();
+    } else {
+      const scrollTop = this.$route.meta.scrollTop;
+      const $content = document.querySelector("#scroller");
+      if (scrollTop && $content) {
+        $content.scrollTop = scrollTop;
+      }
+    }
+    this.settingUpdateTime = settingForm.updated;
   },
   methods: {
     /**
@@ -175,6 +196,7 @@ export default {
     async reload() {
       try {
         this.list = await getPostList(this.fliterForm);
+        this.pagination.current = 1;
         this.closeFilterModal();
       } catch (e) {
         console.error(e);

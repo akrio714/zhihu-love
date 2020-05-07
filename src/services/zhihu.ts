@@ -7,7 +7,6 @@
  * @FilePath: /love/src/services/zhihu.ts
  */
 import axios from 'axios'
-import nodejieba from 'nodejieba'
 import moment from 'moment'
 import {dbFactory} from '../utils/db'
 /**
@@ -30,9 +29,10 @@ export function searchAnswer(keyword = '择偶') {
 export class SettingForm {
   interval = 0 // 自动获取数据间隔 (分钟) 0：不自动获取
   notification = false // 是否开启系统通知显示
-  max = 200 // 分析帖子的数量
+  max = 500 // 分析帖子的数量
   sort = 'updated' // 帖子排序方式 updated:按时间 default:默认
   searchId = '' // 需要用户分析的帖子的id
+  updated = new Date().getTime()
 }
 export class Answer {
   id: string
@@ -205,7 +205,10 @@ export async function getPostList(params:postParams){
 export async function getSettingForm(){
   type DbResult = {form: SettingForm }
   const one = await db.settings.findOne<DbResult>({type:'settings'})
-  return one.form
+  if(one){
+    return one.form
+  }
+  return null
 }
 /**
  * 清空所有数据，同时对必要参数进行初始化 settings设置
@@ -224,4 +227,12 @@ export async function clear(){
    type:'settings',
    form:new SettingForm()
  })
+ console.log('清空成功')
+}
+/**
+ * 检测项目是否完成初始化
+ */
+export async function needInit(){
+  const posts = await db.posts.find({})
+  return posts.length === 0
 }

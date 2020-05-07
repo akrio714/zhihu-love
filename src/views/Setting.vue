@@ -69,6 +69,9 @@
         extra="分析帖子的数量，如果不明白请选第一个"
       >
         <a-radio-group v-model="form.max">
+          <a-radio :value="10">
+            前10条
+          </a-radio>
           <a-radio :value="500">
             前500条
           </a-radio>
@@ -206,12 +209,12 @@ export default Vue.extend({
     async onSubmit() {
       (this.$refs.settingsForm as any).validate(async (valid: boolean) => {
         if (valid) {
-          // 如果拉取数量 帖子id 排序规则有任何变化则重新拉取帖子信息
-          if (
+          const needReloadPost =
             this.oldForm.searchId !== this.form.searchId ||
             this.oldForm.max !== this.form.max ||
-            this.oldForm.sort !== this.form.sort
-          ) {
+            this.oldForm.sort !== this.form.sort;
+          // 如果拉取数量 帖子id 排序规则有任何变化则重新拉取帖子信息
+          if (needReloadPost) {
             const list = [];
             const data = await getAnswer(this.form.searchId, this.form.sort);
             let nextUrl = data.paging.next;
@@ -243,8 +246,15 @@ export default Vue.extend({
             console.log("数据变化无需刷新post数据", this.oldForm, this.form);
           }
           // 将setting信息保存到设置信息中
-          await saveSetting(this.form);
+          if (needReloadPost) {
+            this.form.updated = new Date().getTime();
+          }
+          const savedSetting = await saveSetting(this.form);
+          console.log("savedSetting", savedSetting);
           this.oldForm = { ...this.form };
+          // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+          // @ts-ignore：无法监听到$bus
+          this.$bus.$emit("changeMenuLock", false);
         } else {
           console.log("error submit!!");
           return false;
@@ -260,12 +270,25 @@ export default Vue.extend({
       await this.reload();
     },
     async reload() {
-      this.form = await getSettingForm();
+      // 如果没有setting 表单则说明第一次进入，直接给一个初始值
+      const form = await getSettingForm();
+      if (form) {
+        this.form = form;
+      } else {
+        await clear();
+        this.form = new SettingForm();
+      }
       this.oldForm = { ...this.form };
     }
   },
   async activated() {
-    console.log("created");
+    const myNotification = new Notification("标题", {
+      body: "通知正文内容"
+    });
+
+    myNotification.onclick = () => {
+      console.log("通知被点击");
+    };
     await this.reload();
   }
 });

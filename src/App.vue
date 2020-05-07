@@ -13,14 +13,14 @@
       <a-menu
         theme="dark"
         mode="inline"
-        :default-selected-keys="['SearchPage']"
+        v-model="defaultPage"
         @select="selectItem"
       >
-        <a-menu-item key="SearchPage">
+        <a-menu-item :disabled="disabled" key="SearchPage">
           <a-icon type="search" />
           <span>搜索</span>
         </a-menu-item>
-        <a-menu-item key="StarPage">
+        <a-menu-item :disabled="disabled" key="StarPage">
           <a-icon type="heart" />
           <span>关注</span>
         </a-menu-item>
@@ -57,11 +57,14 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
+import { needInit } from "./services/zhihu";
 export default Vue.extend({
   name: "LayoutPage",
   data() {
     return {
-      collapsed: false
+      collapsed: false,
+      disabled: false,
+      defaultPage: ["SearchPage"] // 默认选中项
     };
   },
   methods: {
@@ -69,6 +72,23 @@ export default Vue.extend({
       console.log(this);
       this.$router.push({ name: item.key });
     }
+  },
+  async created() {
+    let defaultPage = "SearchPage";
+    const disabled = await needInit();
+    // 第一次进入，直接锁死setting页面
+    if (disabled) {
+      defaultPage = "SettingPage";
+      this.disabled = true;
+    }
+    this.defaultPage = [defaultPage];
+    // 对setting信息进行初始化
+    this.$router.push({ name: defaultPage });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // @ts-ignore：无法监听到$bus
+    this.$bus.$on("changeMenuLock", disabled => {
+      this.disabled = disabled;
+    });
   }
 });
 </script>
