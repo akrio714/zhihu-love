@@ -38,13 +38,17 @@
         placeholder="请选择需要分析的帖子"
         prop="searchId"
       >
-        <a-select v-model="form.searchId" style="width: 440px">
+        <a-select
+          v-if="searchList.length > 0"
+          v-model="form.searchId"
+          style="width: 440px"
+          placeholder="请选择需要分析的帖子"
+        >
           <a-select-option
             v-for="searchItem in searchList"
-            :key="searchItem.key"
-            :value="searchItem.key"
+            :key="searchItem.id"
           >
-            {{ searchItem.label }}（{{ searchItem.number }}）
+            {{ searchItem.title }}（{{ `共有${searchItem.answerCount}条` }}）
           </a-select-option>
         </a-select>
       </a-form-model-item>
@@ -147,7 +151,8 @@ import {
   SettingForm,
   getAnswer,
   getNext,
-  savePostList
+  savePostList,
+  getQuestion
 } from "../services/zhihu";
 export default Vue.extend({
   name: "SettingPage",
@@ -169,38 +174,15 @@ export default Vue.extend({
           }
         ]
       },
-      searchList: [
-        {
-          key: "275359100",
-          label: "你的择偶标准是怎样的？",
-          number: "计算帖数中"
-        },
-        {
-          key: "280523155",
-          label: "你最真实（很少吐露）的择偶标准是什么？",
-          number: "计算帖数中"
-        },
-        {
-          key: "364035162",
-          label: "2020年你的择偶标准是什么？",
-          number: "计算帖数中"
-        },
-        {
-          key: "385006282",
-          label: "你择偶的标准是什么？",
-          number: "计算帖数中"
-        },
-        {
-          key: "356957129",
-          label: "研究生的你，择偶标准是什么？",
-          number: "计算帖数中"
-        },
-        {
-          key: "311378291",
-          label: "天津的你，择偶的标准是怎样的？",
-          number: "计算帖数中"
-        }
+      searchIds: [
+        "275359100",
+        "280523155",
+        "364035162",
+        "385006282",
+        "356957129",
+        "311378291"
       ],
+      searchList: [],
       oldForm: new SettingForm(), // 保存之前的表单数据
       form: new SettingForm()
     };
@@ -249,8 +231,17 @@ export default Vue.extend({
           if (needReloadPost) {
             this.form.updated = new Date().getTime();
           }
-          const savedSetting = await saveSetting(this.form);
-          console.log("savedSetting", savedSetting);
+          await saveSetting(this.form);
+          if (this.form.notification) {
+            const permission = await Notification.requestPermission();
+            console.log("permission", permission);
+            if (permission === "denied") {
+              this.$notification.open({
+                message: "提醒",
+                description: "兄弟，不要瞎搞。如果你要通知请点同意 (狗头)"
+              });
+            }
+          }
           this.oldForm = { ...this.form };
           // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
           // @ts-ignore：无法监听到$bus
@@ -279,17 +270,23 @@ export default Vue.extend({
         this.form = new SettingForm();
       }
       this.oldForm = { ...this.form };
+    },
+    /**
+     * 重新拉取帖子的信息
+     */
+    async reloadPostInfo() {
+      const list = [];
+      for (const id of this.searchIds) {
+        const question = await getQuestion(id);
+        list.push(question);
+      }
+      this.$set(this, "searchList", list);
     }
   },
   async activated() {
-    const myNotification = new Notification("标题", {
-      body: "通知正文内容"
-    });
-
-    myNotification.onclick = () => {
-      console.log("通知被点击");
-    };
+    await this.reloadPostInfo();
     await this.reload();
+    //
   }
 });
 </script>

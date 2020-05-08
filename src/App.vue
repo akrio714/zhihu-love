@@ -57,7 +57,7 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-import { needInit } from "./services/zhihu";
+import { needInit, updatePostList } from "./services/zhihu";
 export default Vue.extend({
   name: "LayoutPage",
   data() {
@@ -89,6 +89,8 @@ export default Vue.extend({
     this.$bus.$on("changeMenuLock", disabled => {
       this.disabled = disabled;
     });
+    // 判断用户是否存在设置了自动拉取逻辑,
+    await updatePostList();
   }
 });
 </script>

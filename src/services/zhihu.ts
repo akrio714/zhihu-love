@@ -138,6 +138,27 @@ export async function getAnswer(answerId: string, sortBy = 'updated') {
   )
   return data
 }
+export class QuestionVo{
+  id:string // 问题id
+  title:string // 帖子标题
+  answerCount:string // 回答数量
+  constructor(obj:any){
+    this.id = obj.id
+    this.title = obj.title
+    this.answerCount = obj.answer_count
+  }
+}
+export async function getQuestion(qId:string){
+  const { data } = await axios.get(
+    `https://www.zhihu.com/api/v4/questions/${qId}`,
+    {
+      params:{
+        include: `data[*].answer_count,author,follower_count`
+      }
+    }
+  )
+  return new QuestionVo(data)
+}
 /**
  * 直接请求url
  * @param url 请求的url
@@ -179,7 +200,6 @@ type postParams = { gender: number, keywords: string[] }
  * 获取缓存中的帖子信息
  */
 export async function getPostList(params:postParams){
-  console.log('params',params)
   const result = await db.posts.find({})
   const list = result.map(item => new Answer(item)).filter(item => {
     // 计算性别是否匹配
@@ -235,4 +255,16 @@ export async function clear(){
 export async function needInit(){
   const posts = await db.posts.find({})
   return posts.length === 0
+}
+/**
+ * 拉取最新的数据替换当前数据
+ */
+export async function updatePostList(){
+  // 获取当前库中最新一条数据
+  const list = await db.posts.find({}).sort({ updated_time: -1 }).skip(0).limit(1)
+  // 获取最新时间
+  const lastTime = list[0].updated_time
+  // 拉取晚于该时间点的帖子，如果相同id则进行替换，不同则进行插入
+  const postList = []
+
 }
