@@ -14,6 +14,8 @@ import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
 import VueAwesomeSwiper from 'vue-awesome-swiper'
 import 'swiper/css/swiper.css'
+import { getSettingForm ,SETTING_FORM, SettingForm} from './services/SettingService';
+import {setItem} from './utils/LocalHelper'
 Vue.use(VueAwesomeSwiper /* { default options with global component } */)
 Vue.use(Antd)
 Vue.config.productionTip = false
@@ -25,6 +27,12 @@ router.beforeEach((to: Route, from: Route, next: () => void) => {
   next()
 })
 document.title = '知乎过滤器';
+// 判断setting form 中是否有值，如果没有则直接给定一个默认值
+const settingForm = getSettingForm()
+// 说明是第一次进入，默认直接给个初值
+if(!settingForm){
+  setItem(SETTING_FORM,new SettingForm())
+}
 new Vue({
   router,
   render: h => h(App)

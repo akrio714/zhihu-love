@@ -68,38 +68,19 @@
           </a-radio>
         </a-radio-group>
       </a-form-model-item>
-      <a-form-model-item
-        label="拉取数量"
-        extra="分析帖子的数量，如果不明白请选第一个"
-      >
+      <a-form-model-item label="帖子时间" extra="通过发布时间对帖子进行拉取">
         <a-radio-group v-model="form.max">
-          <a-radio :value="10">
-            前10条
+          <a-radio :value="1">
+            最近1个月
           </a-radio>
-          <a-radio :value="500">
-            前500条
+          <a-radio :value="3">
+            最近3个月
           </a-radio>
-          <a-radio :value="1000">
-            前1000条
-          </a-radio>
-          <a-radio :value="5000">
-            前5000条
+          <a-radio :value="6">
+            最近半年
           </a-radio>
           <a-radio :value="-1">
             全部(慎用，可能会被制裁)
-          </a-radio>
-        </a-radio-group>
-      </a-form-model-item>
-      <a-form-model-item
-        label="排序方式"
-        extra="由于知乎存在2种排序方式，所以会影响最终拉取的结果，建议采用时间排序"
-      >
-        <a-radio-group v-model="form.sort">
-          <a-radio value="updated">
-            按时间排序
-          </a-radio>
-          <a-radio value="default">
-            默认排序
           </a-radio>
         </a-radio-group>
       </a-form-model-item>
@@ -144,16 +125,14 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { getQuestion } from "../services/zhihu";
 import {
   saveSetting,
-  clear,
-  getSettingForm,
   SettingForm,
-  getAnswer,
-  getNext,
-  savePostList,
-  getQuestion
-} from "../services/zhihu";
+  getSettingForm,
+  clear
+} from "../services/SettingService";
+import { showErrorMsg } from "../utils/fetch";
 export default Vue.extend({
   name: "SettingPage",
   data() {
@@ -183,69 +162,20 @@ export default Vue.extend({
         "311378291"
       ],
       searchList: [],
-      oldForm: new SettingForm(), // 保存之前的表单数据
       form: new SettingForm()
     };
   },
   methods: {
     async onSubmit() {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (this.$refs.settingsForm as any).validate(async (valid: boolean) => {
         if (valid) {
-          const needReloadPost =
-            this.oldForm.searchId !== this.form.searchId ||
-            this.oldForm.max !== this.form.max ||
-            this.oldForm.sort !== this.form.sort;
-          // 如果拉取数量 帖子id 排序规则有任何变化则重新拉取帖子信息
-          if (needReloadPost) {
-            const list = [];
-            const data = await getAnswer(this.form.searchId, this.form.sort);
-            let nextUrl = data.paging.next;
-            this.loadPost.total = this.form.max;
-            if (this.form.max == -1) {
-              this.loadPost.total = data.paging.totals;
-            }
-            this.loadPost.show = true;
-            list.push(...data.data);
-            this.loadPost.current = list.length;
-            for (
-              let i = data.data.length;
-              i < this.form.max || this.form.max === -1;
-              i += data.data.length
-            ) {
-              const nextData = await getNext(nextUrl);
-              list.push(...nextData.data);
-              this.loadPost.current = list.length;
-              // 如果已经到底则不进行爬取
-              if (!nextData.paging.is_end) {
-                nextUrl = nextData.paging.next;
-              } else {
-                break;
-              }
-            }
-            await savePostList(list);
-            this.loadPost.show = false;
-          } else {
-            console.log("数据变化无需刷新post数据", this.oldForm, this.form);
+          try {
+            await saveSetting(this.form);
+          } catch (e) {
+            showErrorMsg;
+          } finally {
           }
-          // 将setting信息保存到设置信息中
-          if (needReloadPost) {
-            this.form.updated = new Date().getTime();
-          }
-          await saveSetting(this.form);
-          if (this.form.notification) {
-            const permission = await Notification.requestPermission();
-            console.log("permission", permission);
-            if (permission === "denied") {
-              this.$notification.open({
-                message: "提醒",
-                description: "兄弟，不要瞎搞。如果你要通知请点同意 (狗头)"
-              });
-            }
-          }
-          this.oldForm = { ...this.form };
-          // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-          // @ts-ignore：无法监听到$bus
-          this.$bus.$emit("changeMenuLock", false);
         } else {
           console.log("error submit!!");
           return false;
@@ -257,19 +187,7 @@ export default Vue.extend({
       await saveSetting(this.form);
     },
     async clearAllClick() {
-      await clear();
-      await this.reload();
-    },
-    async reload() {
-      // 如果没有setting 表单则说明第一次进入，直接给一个初始值
-      const form = await getSettingForm();
-      if (form) {
-        this.form = form;
-      } else {
-        await clear();
-        this.form = new SettingForm();
-      }
-      this.oldForm = { ...this.form };
+      this.form = await clear();
     },
     /**
      * 重新拉取帖子的信息
@@ -285,7 +203,8 @@ export default Vue.extend({
   },
   async activated() {
     await this.reloadPostInfo();
-    await this.reload();
+    const form = getSettingForm() || new SettingForm();
+    this.form = form;
     //
   }
 });

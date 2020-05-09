@@ -18,3 +18,7 @@ export function dbFactory(fileName: string) {
     autoload: true,
   })
 }
+export const db = {
+  settings: dbFactory('settings.db'),
+  posts: dbFactory('posts.db')
+}

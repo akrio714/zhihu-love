@@ -38,30 +38,33 @@
           @click="() => (collapsed = !collapsed)"
         />
       </a-layout-header>
-      <a-layout-content
-        id="scroller"
-        :style="{
-          margin: '24px 16px',
-          padding: '24px',
-          background: '#fff',
-          minHeight: '280px',
-          overflow: 'scroll'
-        }"
-      >
-        <keep-alive>
-          <router-view />
-        </keep-alive>
-      </a-layout-content>
+      <a-spin :spinning="spinning" :delay="500">
+        <a-layout-content
+          id="scroller"
+          :style="{
+            margin: '24px 16px',
+            padding: '24px',
+            background: '#fff',
+            minHeight: '280px',
+            overflow: 'scroll'
+          }"
+        >
+          <keep-alive>
+            <router-view />
+          </keep-alive>
+        </a-layout-content>
+      </a-spin>
     </a-layout>
   </a-layout>
 </template>
 <script lang="ts">
 import Vue from "vue";
-import { needInit, updatePostList } from "./services/zhihu";
+import { getSettingForm } from "./services/SettingService";
 export default Vue.extend({
   name: "LayoutPage",
   data() {
     return {
+      spinning: true,
       collapsed: false,
       disabled: false,
       defaultPage: ["SearchPage"] // 默认选中项
@@ -75,9 +78,9 @@ export default Vue.extend({
   },
   async created() {
     let defaultPage = "SearchPage";
-    const disabled = await needInit();
+    const settingForm = getSettingForm();
     // 第一次进入，直接锁死setting页面
-    if (disabled) {
+    if (!settingForm || !settingForm.searchId) {
       defaultPage = "SettingPage";
       this.disabled = true;
     }
@@ -90,7 +93,7 @@ export default Vue.extend({
       this.disabled = disabled;
     });
     // 判断用户是否存在设置了自动拉取逻辑,
-    await updatePostList();
+    // await updatePostList();
   }
 });
 </script>

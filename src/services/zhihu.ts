@@ -8,12 +8,12 @@
  */
 import axios from 'axios'
 import moment from 'moment'
-import {dbFactory} from '../utils/db'
+import { dbFactory } from '../utils/db'
 /**
  * 查询指定类型的文章
  * @param keyword 查询的关键词
  */
-export function searchAnswer(keyword = '择偶') {
+export function searchAnswer(keyword = '') {
   return axios.get('https://www.zhihu.com/api/v4/search_v3', {
     params: {
       t: 'general',
@@ -21,9 +21,9 @@ export function searchAnswer(keyword = '择偶') {
       correction: 1,
       offset: 0,
       limit: 20,
-      'lc_idx': 0,
-      'show_all_topics': 0,
-    },
+      lc_idx: 0,
+      show_all_topics: 0
+    }
   })
 }
 export class SettingForm {
@@ -59,7 +59,7 @@ export class Answer {
   // 所有图片
   imgList: string[] = []
   // 文档原文地址
-  url:string
+  url: string
   constructor(obj: any) {
     this.id = obj.id
     this.authorName = obj.author.name
@@ -75,14 +75,16 @@ export class Answer {
     this.voteupCount = obj.voteup_count
     this.commentCount = obj.comment_count
     this.createdTime = moment(obj.created_time).format('YYYY-MM-DD HH:mm')
-    this.updatedTime = moment(obj.updated_time*1000).format('YYYY-MM-DD HH:mm')
+    this.updatedTime = moment(obj.updated_time * 1000).format(
+      'YYYY-MM-DD HH:mm'
+    )
     // 计算原文地址
     this.url = `https://www.zhihu.com/question/${obj.question.id}/answer/${obj.id}`
     // 获取回答中的所有图片
     const frag = document.createElement('div')
     frag.innerHTML = obj.content
     //获取img 标签
-    frag.querySelectorAll('img').forEach((img) => {
+    frag.querySelectorAll('img').forEach(img => {
       this.imgList.push(img.dataset.actualsrc as string)
     })
     // 匿名用户就不显示头像了
@@ -93,30 +95,30 @@ export class Answer {
     if (this.authorGender === -1) {
       this.authorGender = 2
     }
-    if(this.authorGender === 2){
-    // 如果从用户获取不到性别则尝试从文章中关键字进行获取
-    const manStringList = ['本人男','我是男','爱好女','找女朋友']
-    // 先尝试判断是否为男生
-    for(const s of manStringList){
-      const isMan = this.content.indexOf(s) !== -1
-      // 通过关键字判断为男性
-      if(isMan){
-        this.authorGender = 1
-        break
+    if (this.authorGender === 2) {
+      // 如果从用户获取不到性别则尝试从文章中关键字进行获取
+      const manStringList = ['本人男', '我是男', '爱好女', '找女朋友']
+      // 先尝试判断是否为男生
+      for (const s of manStringList) {
+        const isMan = this.content.indexOf(s) !== -1
+        // 通过关键字判断为男性
+        if (isMan) {
+          this.authorGender = 1
+          break
+        }
       }
     }
-  }
-    if(this.authorGender === 2){
-      const wonmanStringList = ['本人女','我是女','爱好男','找男朋友']
+    if (this.authorGender === 2) {
+      const wonmanStringList = ['本人女', '我是女', '爱好男', '找男朋友']
       // 尝试判断是否为女生
-    for(const s of wonmanStringList){
-      const isWoman = this.content.indexOf(s) !== -1
-      // 通过关键字判断为女性
-      if(isWoman){
-        this.authorGender = 0
-        break
+      for (const s of wonmanStringList) {
+        const isWoman = this.content.indexOf(s) !== -1
+        // 通过关键字判断为女性
+        if (isWoman) {
+          this.authorGender = 0
+          break
+        }
       }
-    }
     }
   }
 }
@@ -125,34 +127,36 @@ export class Answer {
  * @param answerId 查询问题的id
  * @param sortBy 排序方式 default：默认排序 updated：按时间排序
  */
-export async function getAnswer(answerId: string, sortBy = 'updated') {
+export async function getAnswer(answerId: string, sortBy = 'updated',limit=5,offset=0) {
   const { data } = await axios.get(
     `https://www.zhihu.com/api/v4/questions/${answerId}/answers`,
     {
       params: {
-        'sort_by': sortBy,
+        sort_by: sortBy,
+        limit:5,
+        offset:0,
         include:
-          'data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,is_labeled,is_recognized,paid_info,paid_info_content;data[*].mark_infos[*].url;data[*].author.follower_count,badge[*].topics',
-      },
+          'data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,is_labeled,is_recognized,paid_info,paid_info_content;data[*].mark_infos[*].url;data[*].author.follower_count,badge[*].topics'
+      }
     }
   )
   return data
 }
-export class QuestionVo{
-  id:string // 问题id
-  title:string // 帖子标题
-  answerCount:string // 回答数量
-  constructor(obj:any){
+export class QuestionVo {
+  id: string // 问题id
+  title: string // 帖子标题
+  answerCount: string // 回答数量
+  constructor(obj: any) {
     this.id = obj.id
     this.title = obj.title
     this.answerCount = obj.answer_count
   }
 }
-export async function getQuestion(qId:string){
+export async function getQuestion(qId: string) {
   const { data } = await axios.get(
     `https://www.zhihu.com/api/v4/questions/${qId}`,
     {
-      params:{
+      params: {
         include: `data[*].answer_count,author,follower_count`
       }
     }
@@ -170,62 +174,71 @@ export async function getNext(url: string) {
 
 const db = {
   settings: dbFactory('settings.db'),
-  posts: dbFactory('posts.db'),
+  posts: dbFactory('posts.db')
 }
-export async function saveSetting(form:SettingForm) {
-  const save =  await db.settings.update({
-    type:'settings'
-    }, {
+export async function saveSetting(form: SettingForm) {
+  const save = await db.settings.update(
+    {
+      type: 'settings'
+    },
+    {
       $set: {
-        form:form
+        form: form
       }
-    });
+    }
+  )
   return save
 }
 /**
  * 更新保存的帖子信息
- * @param list 
+ * @param list
  */
-export async function savePostList(list:any){
+export async function savePostList(list: any) {
   // 清空之前选项
-  await db.posts.remove({},{
-    multi: true
-  })
+  await db.posts.remove(
+    {},
+    {
+      multi: true
+    }
+  )
   // 将新数据进行插入
   const result = await db.posts.insert(list)
   return result
 }
-type postParams = { gender: number, keywords: string[] }
+type postParams = { gender: number; keywords: string[] }
 /**
  * 获取缓存中的帖子信息
  */
-export async function getPostList(params:postParams){
+export async function getPostList(params: postParams) {
   const result = await db.posts.find({})
-  const list = result.map(item => new Answer(item)).filter(item => {
-    // 计算性别是否匹配
-    const genderFliter = params.gender === item.authorGender || item.authorGender === 2
-    // 计算关键字是否匹配
-    let keywordFilter = true
-    for(const keyword of params.keywords){
-      const success = item.content.indexOf(keyword) !==-1
-      console.log(`${keyword} success`)
-            // 如果keyword有一项不匹配则直接过滤掉
-            if(!success){
-              keywordFilter = false
-              break
-                    }
-    }
-    return genderFliter && keywordFilter
-  })
+  const list = result
+    .map(item => new Answer(item))
+    .filter(item => {
+      // 计算性别是否匹配
+      const genderFliter =
+        params.gender === item.authorGender || item.authorGender === 2
+      // 计算关键字是否匹配
+      let keywordFilter = true
+      for (const keyword of params.keywords) {
+        const success = item.content.indexOf(keyword) !== -1
+        console.log(`${keyword} success`)
+        // 如果keyword有一项不匹配则直接过滤掉
+        if (!success) {
+          keywordFilter = false
+          break
+        }
+      }
+      return genderFliter && keywordFilter
+    })
   return list
 }
 /**
  * 获取设置页面的表单数据
  */
-export async function getSettingForm(){
-  type DbResult = {form: SettingForm }
-  const one = await db.settings.findOne<DbResult>({type:'settings'})
-  if(one){
+export async function getSettingForm() {
+  type DbResult = { form: SettingForm }
+  const one = await db.settings.findOne<DbResult>({ type: 'settings' })
+  if (one) {
     return one.form
   }
   return null
@@ -233,38 +246,60 @@ export async function getSettingForm(){
 /**
  * 清空所有数据，同时对必要参数进行初始化 settings设置
  */
-export async function clear(){
+export async function clear() {
   // 清空设置数据
-  await db.settings.remove({},{
-    multi: true
-  })
+  await db.settings.remove(
+    {},
+    {
+      multi: true
+    }
+  )
   // 清空保存的帖子数据
-  await db.posts.remove({},{
-    multi: true
-  })
+  await db.posts.remove(
+    {},
+    {
+      multi: true
+    }
+  )
   // 初始化表单数据
- await db.settings.insert({
-   type:'settings',
-   form:new SettingForm()
- })
- console.log('清空成功')
+  await db.settings.insert({
+    type: 'settings',
+    form: new SettingForm()
+  })
+  console.log('清空成功')
 }
 /**
  * 检测项目是否完成初始化
  */
-export async function needInit(){
+export async function needInit() {
   const posts = await db.posts.find({})
   return posts.length === 0
 }
 /**
  * 拉取最新的数据替换当前数据
  */
-export async function updatePostList(){
+export async function updatePostList() {
   // 获取当前库中最新一条数据
-  const list = await db.posts.find({}).sort({ updated_time: -1 }).skip(0).limit(1)
+  const list = await db.posts
+    .find({})
+    .sort({ updated_time: -1 })
+    .skip(0)
+    .limit(1)
+  const lastOne = (list as any)[0]
   // 获取最新时间
-  const lastTime = list[0].updated_time
+  const lastTime = lastOne.updated_time
   // 拉取晚于该时间点的帖子，如果相同id则进行替换，不同则进行插入
   const postList = []
-
+  const data = await getAnswer(lastOne.question.id)
+  let nextUrl = data.paging.next
+  // 标记是否已经拉取到最新数据
+  let updated = false
+  data.forEach(answer => {
+    if(answer.updated_time > lastTime.updated_time){
+      db.posts.update({ id: answer.id }, answer)
+    }else {
+      updated = true
+      return false
+    }
+  })
 }
