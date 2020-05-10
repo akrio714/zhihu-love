@@ -1,7 +1,12 @@
 <template>
   <a-spin :spinning="showLoading" :delay="500">
     <a-layout id="components-layout-demo-custom-trigger">
-      <a-layout-sider v-model="collapsed" :trigger="null" collapsible>
+      <a-layout-sider
+        v-if="!this.isGuide"
+        v-model="collapsed"
+        :trigger="null"
+        collapsible
+      >
         <div class="logo" />
         <a-menu
           theme="dark"
@@ -9,15 +14,15 @@
           v-model="defaultPage"
           @select="selectItem"
         >
-          <a-menu-item :disabled="disabled" key="SearchPage">
+          <a-menu-item key="SearchPage">
             <a-icon type="search" />
             <span>搜索</span>
           </a-menu-item>
-          <!-- <a-menu-item :disabled="disabled" key="StarPage">
+          <!-- <a-menu-item key="StarPage">
           <a-icon type="heart" />
           <span>关注</span>
         </a-menu-item> -->
-          <a-menu-item :disabled="disabled" key="PostPage">
+          <a-menu-item key="PostPage">
             <a-icon type="cloud-server" />
             <span>帖子</span>
           </a-menu-item>
@@ -30,6 +35,7 @@
       <a-layout>
         <a-layout-header style="background: #fff; padding: 0">
           <a-icon
+            v-if="!this.isGuide"
             class="trigger"
             :type="collapsed ? 'menu-unfold' : 'menu-fold'"
             @click="() => (collapsed = !collapsed)"
@@ -63,35 +69,35 @@ export default Vue.extend({
     return {
       showLoading: false,
       collapsed: false,
-      disabled: false,
+      isGuide: false,
       defaultPage: ["SearchPage"], // 默认选中项
     };
   },
   methods: {
-    selectItem(item: any) {
-      console.log(this);
+    selectItem(item: { key: string }) {
       this.$router.push({ name: item.key });
     },
   },
   async created() {
-    let defaultPage = "SearchPage";
     const settingForm = getSettingForm();
     // 第一次进入，直接锁死setting页面
     if (!settingForm || !settingForm.searchId) {
-      defaultPage = "SettingPage";
-      this.disabled = true;
+      this.$router.push({ name: "GuidePage" });
+      this.isGuide = true;
+    } else {
+      const defaultPage = "SearchPage";
+      this.defaultPage = [defaultPage];
+      // 对setting信息进行初始化
+      this.$router.push({ name: defaultPage });
     }
-    this.defaultPage = [defaultPage];
-    // 对setting信息进行初始化
-    this.$router.push({ name: defaultPage });
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore：无法监听到$bus
-    this.$bus.$on("changeMenuLock", (disabled) => {
-      this.disabled = disabled;
+    this.$bus.$on("initSuccess", (success: boolean) => {
+      this.isGuide = !success;
     });
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore：无法监听到$bus
-    this.$bus.$on("showLoading", (show) => {
+    this.$bus.$on("showLoading", (show: boolean) => {
       this.showLoading = show;
     });
     // 判断用户是否存在设置了自动拉取逻辑,

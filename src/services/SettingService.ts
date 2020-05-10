@@ -108,6 +108,13 @@ export async function clear(): Promise<SettingForm> {
       multi: true,
     }
   );
+  // 清空帖子配置数据
+  await db.postSettings.remove(
+    {},
+    {
+      multi: true,
+    }
+  );
   const form = new SettingForm();
   setItem(SETTING_FORM, form);
   return form;

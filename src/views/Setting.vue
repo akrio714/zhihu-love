@@ -143,7 +143,6 @@ export default Vue.extend({
             this.$bus.$emit("showLoading", false);
           }
         } else {
-          console.log("error submit!!");
           return false;
         }
       });
