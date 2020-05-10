@@ -4,7 +4,7 @@
 export default class QuestionVo {
     id: string // 问题id
     title: string // 帖子标题
-    answerCount: string // 回答数量
+    answerCount: number // 回答数量
     constructor(obj: any) {
       this.id = obj.id
       this.title = obj.title

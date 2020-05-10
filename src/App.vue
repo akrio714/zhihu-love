@@ -1,61 +1,58 @@
-<!--
- * @Author: your name
- * @Date: 2020-05-02 08:14:25
- * @LastEditTime: 2020-05-06 19:40:11
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /love/src/App.vue
- -->
 <template>
-  <a-layout id="components-layout-demo-custom-trigger">
-    <a-layout-sider v-model="collapsed" :trigger="null" collapsible>
-      <div class="logo" />
-      <a-menu
-        theme="dark"
-        mode="inline"
-        v-model="defaultPage"
-        @select="selectItem"
-      >
-        <a-menu-item :disabled="disabled" key="SearchPage">
-          <a-icon type="search" />
-          <span>搜索</span>
-        </a-menu-item>
-        <a-menu-item :disabled="disabled" key="StarPage">
+  <a-spin :spinning="showLoading" :delay="500">
+    <a-layout id="components-layout-demo-custom-trigger">
+      <a-layout-sider v-model="collapsed" :trigger="null" collapsible>
+        <div class="logo" />
+        <a-menu
+          theme="dark"
+          mode="inline"
+          v-model="defaultPage"
+          @select="selectItem"
+        >
+          <a-menu-item :disabled="disabled" key="SearchPage">
+            <a-icon type="search" />
+            <span>搜索</span>
+          </a-menu-item>
+          <!-- <a-menu-item :disabled="disabled" key="StarPage">
           <a-icon type="heart" />
           <span>关注</span>
-        </a-menu-item>
-        <a-menu-item key="SettingPage">
-          <a-icon type="form" />
-          <span>设置</span>
-        </a-menu-item>
-      </a-menu>
-    </a-layout-sider>
-    <a-layout>
-      <a-layout-header style="background: #fff; padding: 0">
-        <a-icon
-          class="trigger"
-          :type="collapsed ? 'menu-unfold' : 'menu-fold'"
-          @click="() => (collapsed = !collapsed)"
-        />
-      </a-layout-header>
-      <a-spin :spinning="spinning" :delay="500">
+        </a-menu-item> -->
+          <a-menu-item :disabled="disabled" key="PostPage">
+            <a-icon type="cloud-server" />
+            <span>帖子</span>
+          </a-menu-item>
+          <a-menu-item key="SettingPage">
+            <a-icon type="form" />
+            <span>设置</span>
+          </a-menu-item>
+        </a-menu>
+      </a-layout-sider>
+      <a-layout>
+        <a-layout-header style="background: #fff; padding: 0">
+          <a-icon
+            class="trigger"
+            :type="collapsed ? 'menu-unfold' : 'menu-fold'"
+            @click="() => (collapsed = !collapsed)"
+          />
+          关于作者
+        </a-layout-header>
         <a-layout-content
           id="scroller"
           :style="{
             margin: '24px 16px',
             padding: '24px',
             background: '#fff',
-            minHeight: '280px',
-            overflow: 'scroll'
+            height: 'calc(100vh - 112px)',
+            overflow: 'scroll',
           }"
         >
           <keep-alive>
             <router-view />
           </keep-alive>
         </a-layout-content>
-      </a-spin>
+      </a-layout>
     </a-layout>
-  </a-layout>
+  </a-spin>
 </template>
 <script lang="ts">
 import Vue from "vue";
@@ -64,17 +61,17 @@ export default Vue.extend({
   name: "LayoutPage",
   data() {
     return {
-      spinning: true,
+      showLoading: false,
       collapsed: false,
       disabled: false,
-      defaultPage: ["SearchPage"] // 默认选中项
+      defaultPage: ["SearchPage"], // 默认选中项
     };
   },
   methods: {
     selectItem(item: any) {
       console.log(this);
       this.$router.push({ name: item.key });
-    }
+    },
   },
   async created() {
     let defaultPage = "SearchPage";
@@ -89,12 +86,17 @@ export default Vue.extend({
     this.$router.push({ name: defaultPage });
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore：无法监听到$bus
-    this.$bus.$on("changeMenuLock", disabled => {
+    this.$bus.$on("changeMenuLock", (disabled) => {
       this.disabled = disabled;
+    });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // @ts-ignore：无法监听到$bus
+    this.$bus.$on("showLoading", (show) => {
+      this.showLoading = show;
     });
     // 判断用户是否存在设置了自动拉取逻辑,
     // await updatePostList();
-  }
+  },
 });
 </script>
 <style lang="less">

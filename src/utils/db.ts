@@ -19,6 +19,6 @@ export function dbFactory(fileName: string) {
   })
 }
 export const db = {
-  settings: dbFactory('settings.db'),
+  postSettings: dbFactory('post_settings.db'),
   posts: dbFactory('posts.db')
 }

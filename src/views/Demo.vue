@@ -8,13 +8,13 @@
 import Vue from "vue";
 import {
   searchAnswerList,
-  SearchAnswerListParams
+  SearchAnswerListParams,
 } from "../services/PostService";
 export default Vue.extend({
   name: "DemoPage",
   data() {
     return {
-      result: []
+      result: null,
     };
   },
   methods: {
@@ -24,8 +24,7 @@ export default Vue.extend({
       params.searchId = "392288808";
       params.limit = 20;
       this.result = await searchAnswerList(params);
-      console.log(" this.result", this.result.data.length);
-    }
-  }
+    },
+  },
 });
 </script>

@@ -1,13 +1,5 @@
-<!--
- * @Author: your name
- * @Date: 2020-05-02 08:14:25
- * @LastEditTime: 2020-05-06 19:59:54
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /love/src/views/Home.vue
- -->
 <template>
-  <div>
+  <div ref="searchPage">
     <div @click="openFilterModal" class="filter-icon-container">
       <a-icon type="setting" class="filter-icon" />
     </div>
@@ -105,6 +97,9 @@
         </a-form-model-item>
         <a-form-model-item label="性别" extra="智能计算，有可能未必准确">
           <a-radio-group v-model="fliterForm.gender">
+            <a-radio :value="null">
+              全部
+            </a-radio>
             <a-radio :value="0">
               女
             </a-radio>
@@ -125,8 +120,10 @@
 
 <script>
 // @ is an alias to /src
-import { getPostList, getSettingForm } from "../services/zhihu";
+import { getPostList } from "../services/PostService";
+import { getSettingForm } from "../services/SettingService";
 import { shell } from "electron";
+import { showErrorMsg } from "../utils/fetch";
 export default {
   name: "AttentionPage",
   components: {},
@@ -134,10 +131,9 @@ export default {
     return {
       showFilterModal: false,
       list: [],
-      index: 1,
       fliterForm: {
         keywords: [],
-        gender: 1
+        gender: 1,
       },
       settingUpdateTime: 0,
       labelCol: { span: 5 },
@@ -149,39 +145,40 @@ export default {
         spaceBetween: 30,
         pagination: {
           el: ".swiper-pagination",
-          clickable: true
-        }
+          clickable: true,
+        },
         // Some Swiper option/callback...
       },
       pagination: {
         current: 1,
-        onChange: () => {
-          // 回到顶部
-          document.getElementById("scroller").scrollTop = 0;
+        onChange: (page) => {
+          this.pagination.current = page;
+          this.$nextTick(() => {
+            // 回到顶部
+            document.getElementById("scroller").scrollTop = 0;
+          });
         },
-        pageSize: 10
-      }
+        pageSize: 10,
+      },
     };
   },
   async activated() {
     // 判断是否发生数据改变
-    const settingForm = await getSettingForm();
-    // 如果setting都不存在那么也不用请求数据了，说明是第一次进入
-    if (!settingForm) {
-      return;
-    }
-    // 判断搜索条件是否发生改变
-    const changeSettingForm = settingForm.updated !== this.settingUpdateTime;
-    if (changeSettingForm) {
-      await this.reload();
-    } else {
-      const scrollTop = this.$route.meta.scrollTop;
-      const $content = document.querySelector("#scroller");
-      if (scrollTop && $content) {
-        $content.scrollTop = scrollTop;
+    const settingForm = getSettingForm();
+    if (settingForm && settingForm.searchId) {
+      // 判断搜索条件是否发生改变
+      const changeSettingForm = settingForm.updated !== this.settingUpdateTime;
+      if (changeSettingForm) {
+        await this.reload();
+      } else {
+        const scrollTop = this.$route.meta.scrollTop;
+        const $content = document.querySelector("#scroller");
+        if (scrollTop && $content) {
+          $content.scrollTop = scrollTop;
+        }
       }
+      this.settingUpdateTime = settingForm.updated;
     }
-    this.settingUpdateTime = settingForm.updated;
   },
   methods: {
     /**
@@ -195,11 +192,14 @@ export default {
     },
     async reload() {
       try {
+        this.$bus.$emit("showLoading", true);
         this.list = await getPostList(this.fliterForm);
         this.pagination.current = 1;
         this.closeFilterModal();
       } catch (e) {
-        console.error(e);
+        showErrorMsg(e);
+      } finally {
+        this.$bus.$emit("showLoading", false);
       }
     },
     /**
@@ -213,8 +213,8 @@ export default {
      */
     closeFilterModal() {
       this.showFilterModal = false;
-    }
-  }
+    },
+  },
 };
 </script>
 <style lang="less" scoped>

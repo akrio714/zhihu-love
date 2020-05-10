@@ -16,10 +16,13 @@ import VueAwesomeSwiper from 'vue-awesome-swiper'
 import 'swiper/css/swiper.css'
 import { getSettingForm ,SETTING_FORM, SettingForm} from './services/SettingService';
 import {setItem} from './utils/LocalHelper'
+import EventBus from 'vue-bus-ts';
+
 Vue.use(VueAwesomeSwiper /* { default options with global component } */)
 Vue.use(Antd)
 Vue.config.productionTip = false
-Vue.prototype.$bus = Vue.prototype.$bus || new Vue() // 注册一个全局的总线组件
+Vue.use(EventBus);
+var bus = new EventBus.Bus();
 router.beforeEach((to: Route, from: Route, next: () => void) => {
   const $content = document.querySelector('#scroller')
   const scrollTop = $content ? $content.scrollTop : 0
@@ -33,7 +36,8 @@ const settingForm = getSettingForm()
 if(!settingForm){
   setItem(SETTING_FORM,new SettingForm())
 }
-new Vue({
+export default new Vue({
+  bus,
   router,
   render: h => h(App)
 }).$mount('#app')

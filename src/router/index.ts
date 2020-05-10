@@ -10,17 +10,12 @@ import Vue from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
 import SearchPage from "../views/Search.vue";
 import SettingPage from "../views/Setting.vue";
-import DemoPage from '../views/Demo.vue'
+import PostPage from '../views/Post.vue'
 Vue.use(VueRouter);
 
 const routes: Array<RouteConfig> = [
   {
-    path: "/",
-    name: "DemoPage",
-    component: DemoPage
-  },
-  {
-    path: "/",
+    path: "/search",
     name: "SearchPage",
     component: SearchPage
   },
@@ -28,6 +23,11 @@ const routes: Array<RouteConfig> = [
     path: "/setting",
     name: "SettingPage",
     component: SettingPage
+  },
+  {
+    path: "/post",
+    name: "PostPage",
+    component: PostPage
   }
 ];
 
