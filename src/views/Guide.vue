@@ -15,6 +15,7 @@
             自定义
             <a-input
               v-model="form.customUrl"
+              @blur="valdateUrl"
               placeholder="https://www.zhihu.com/question/xxxx"
               v-if="form.searchUrl === 'custom'"
               :style="{ width: 160, marginLeft: 20 }"
@@ -34,6 +35,14 @@
 <script lang="ts">
 import Vue from "vue";
 import { getQuestionInfoBy, getQuestionBy } from "../services/PostService";
+import { clipboard } from "electron";
+import PostSettingVo from "../services/model/PostSettingVo";
+import {
+  saveOrUpdatePostSetting,
+  saveSetting,
+  SettingForm,
+} from "../services/SettingService";
+import { showErrorMsg } from "../utils/fetch";
 // 第一次进入的引导页面
 export default Vue.extend({
   name: "GuidePage",
@@ -82,9 +91,10 @@ export default Vue.extend({
         },
       ],
       form: {
-        searchUrl: "",
-        customUrl: "",
+        searchUrl: "", // 通过预选项进行的选择
+        customUrl: "", // 通过自定义项手动输入的url
       },
+      oldClipboardText: "", // 上次保存在剪切板中的数据
       rules: {
         searchUrl: [
           {
@@ -92,21 +102,19 @@ export default Vue.extend({
             message: "请任意选择一篇文章",
             trigger: "blur",
           },
-        ],
-        customUrl: [
           {
             asyncValidator(
               rule: unknown,
               value: string,
               callback: (info?: unknown) => {}
             ) {
-              console.log("rule", rule);
               // 如果是自定义模式 那么就要检测url是否正确了
-              if (_this.form.searchUrl === "custom") {
-                if (value === "") {
+              if (value === "custom") {
+                const customUrl = _this.form.customUrl;
+                if (customUrl === "") {
                   callback(new Error("请输入关注问题url地址"));
                 }
-                const result = getQuestionInfoBy(value);
+                const result = getQuestionInfoBy(customUrl);
                 if (result) {
                   getQuestionBy(result.qId).then(() => {
                     callback();
@@ -127,10 +135,40 @@ export default Vue.extend({
     };
   },
   methods: {
+    /**
+     * 验证自定义url是否符合要求
+     */
+    valdateUrl() {
+      (this.$refs.ruleForm as any).validateField("searchUrl");
+    },
     onSubmit() {
-      (this.$refs.ruleForm as any).validate((valid: boolean) => {
+      (this.$refs.ruleForm as any).validate(async (valid: boolean) => {
         if (valid) {
-          // 通过验证折后
+          // 通过验证后保存当前post到库中
+          try {
+            this.$bus.$emit("showLoading", true);
+            const postForm = new PostSettingVo();
+            if (this.form.searchUrl === "custom") {
+              postForm.url = this.form.customUrl;
+            } else {
+              postForm.url = this.form.searchUrl;
+            }
+            // 保存Post信息
+            const { id } = await saveOrUpdatePostSetting(postForm);
+            // 然后为基础设置给定一个初始值，并帮他把当前搜索的帖子填上
+            const settingForm = new SettingForm();
+            // 将刚刚保存post信息中的id自动进行填写
+            settingForm.searchId = id;
+            await saveSetting(settingForm);
+            // 然后跳转到查询页面
+            this.$router.push({
+              name: "SearchPage",
+            });
+          } catch (e) {
+            showErrorMsg(e);
+          } finally {
+            this.$bus.$emit("showLoading", false);
+          }
         } else {
           return false;
         }
@@ -138,16 +176,63 @@ export default Vue.extend({
     },
   },
   created() {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log("页面被隐藏");
+      } else {
+        const currentClipborad = clipboard.readText();
+        // 判断当前剪切板数据是否和上次一致，如果一样就说明用户不想用这个，直接隐藏
+        if (currentClipborad === this.oldClipboardText) {
+          return;
+        }
+        // 获取剪切板数据，然后验证是否为有效url
+        const result = getQuestionInfoBy(currentClipborad);
+        if (result) {
+          getQuestionBy(result.qId).then(() => {
+            /**
+             * 判定剪切板中数据为有效url
+             * 这里分为2种情况
+             * 1.用户当前选中的为预选项，那么需要弹出提示进行确认
+             * 2.用户选在就是自定义项，那么在自定义url为空时自动带入，非空也需要弹出提示
+             *  */
+            let auto = false; // 是否为无提示自动带入
+            if (this.form.searchUrl === "custom" && !this.form.customUrl) {
+              auto = true;
+            }
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
+            const _this = this;
+            if (auto) {
+              this.form.customUrl = currentClipborad; // 自动将url粘贴到剪切板
+              // 从新触发验证去掉错误提示
+              this.valdateUrl();
+            } else {
+              this.$confirm({
+                content: `请问是否直接采用接切板中url(${currentClipborad})`,
+                okText: "确认",
+                cancelText: "取消",
+                onOk() {
+                  // 自动切换到自定义选项
+                  _this.form.searchUrl = "custom";
+                  // 自动填写url
+                  _this.form.customUrl = currentClipborad;
+                  // 从新触发验证去掉错误提示
+                  _this.valdateUrl();
+                },
+              });
+            }
+            // 更新历史剪切板数据
+            this.oldClipboardText = currentClipborad;
+          });
+        }
+        console.log("页面被激活");
+      }
+    };
+    // 去掉事件监听主要是调试所需，因为开发环境中自动更新会多次触发created,造成多次绑定
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+    // 增加自动通过剪切板数据自动填入自定义项的逻辑
     document.addEventListener(
       "visibilitychange",
-      () => {
-        if (document.hidden) {
-          console.log("页面被隐藏");
-        } else {
-          // 如果用户处于手动输入文章状态
-          console.log("页面被激活");
-        }
-      },
+      handleVisibilityChange,
       false
     );
   },

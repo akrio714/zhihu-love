@@ -137,8 +137,8 @@ export async function saveOrUpdatePostSetting(form: PostSettingVo) {
     const question = await getQuestionBy(form.id);
     form.question = question.title;
     form.answerCount = question.answerCount;
-    const save = await db.postSettings.insert(form);
-    return save;
+    await db.postSettings.insert(form);
+    return form;
   }
   throw new Error(`系统错误，没有找到qId(${form.id})对应的文章`);
 }
