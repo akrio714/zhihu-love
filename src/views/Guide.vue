@@ -2,7 +2,17 @@
   <div>
     <a-form-model :model="form" :label-col="labelCol" :wrapper-col="wrapperCol">
       <a-form-model-item label="推荐文章">
-       <a-switch v-model="form.recommend" />
+        <a-checkbox-group v-model="form.searchList">
+          <a-checkbox value="1" name="type">
+            Online
+          </a-checkbox>
+          <a-checkbox value="2" name="type">
+            Promotion
+          </a-checkbox>
+          <a-checkbox value="3" name="type">
+            Offline
+          </a-checkbox>
+        </a-checkbox-group>
       </a-form-model-item>
       <a-form-model-item label="Activity zone">
         <a-select v-model="form.region" placeholder="please select your zone">
@@ -26,16 +36,15 @@
       <a-form-model-item label="Instant delivery">
         <a-switch v-model="form.delivery" />
       </a-form-model-item>
-      <a-form-model-item label="Activity type">
-        <a-checkbox-group v-model="form.type">
-          <a-checkbox value="1" name="type">
-            Online
-          </a-checkbox>
-          <a-checkbox value="2" name="type">
-            Promotion
-          </a-checkbox>
-          <a-checkbox value="3" name="type">
-            Offline
+      <a-form-model-item label="关注问题">
+        <a-checkbox-group v-model="form.searchList">
+          <a-checkbox
+            v-for="item in searchList"
+            :key="item.key"
+            :value="item.key"
+            name="type"
+          >
+            {{ item.title }}
           </a-checkbox>
         </a-checkbox-group>
       </a-form-model-item>
@@ -70,6 +79,7 @@ export default Vue.extend({
   name: "GuidePage",
   data() {
     return {
+      searchList: [{ url: "", title: "" }],
       labelCol: { span: 4 },
       wrapperCol: { span: 18 },
       form: {
@@ -79,14 +89,14 @@ export default Vue.extend({
         delivery: false,
         type: [],
         resource: "",
-        desc: "",
-      },
+        desc: ""
+      }
     };
   },
   methods: {
     onSubmit() {
       console.log("submit!", this.form);
-    },
-  },
+    }
+  }
 });
 </script>
