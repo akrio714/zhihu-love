@@ -70,8 +70,8 @@ export default Vue.extend({
           title: "你的择偶标准是怎么样的？",
         },
         {
-          url: "https://www.zhihu.com/question/324628376/answer/745818043",
-          title: "天津的你择偶标准是什么？",
+          url: "https://www.zhihu.com/question/311378291/answer/804648946",
+          title: "天津的你，择偶的标准是怎样的？",
         },
         {
           url: "https://www.zhihu.com/question/309872833/answer/956414233",
@@ -160,6 +160,8 @@ export default Vue.extend({
             // 将刚刚保存post信息中的id自动进行填写
             settingForm.searchId = id;
             await saveSetting(settingForm);
+            // 显示左侧隐藏的菜单
+            this.$bus.$emit("initSuccess", true);
             // 然后跳转到查询页面
             this.$router.push({
               name: "SearchPage",
@@ -176,6 +178,8 @@ export default Vue.extend({
     },
   },
   created() {
+    // 能进入这个页面说明数据已经被清空了，那么直接隐藏左边菜单
+     this.$bus.$emit("initSuccess", false);
     const handleVisibilityChange = () => {
       if (document.hidden) {
         console.log("页面被隐藏");

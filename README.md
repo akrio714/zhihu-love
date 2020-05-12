@@ -1,24 +1,9 @@
 # love
 
-## Project setup
-```
-npm install
-```
+##  使用手册
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+第一次进入页面会进入引导页面，此时可以选择预设的问题(非自定义项)。然后点击确认即可
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).

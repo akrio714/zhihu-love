@@ -153,6 +153,8 @@ export default Vue.extend({
     async clearAllClick() {
       try {
         this.form = await clear();
+        // 显示左侧隐藏的菜单
+        this.$router.push({ name: "GuidePage" });
       } catch (e) {
         showErrorMsg(e);
       }

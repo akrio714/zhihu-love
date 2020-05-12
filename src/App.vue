@@ -33,14 +33,14 @@
         </a-menu>
       </a-layout-sider>
       <a-layout>
-        <a-layout-header style="background: #fff; padding: 0">
+        <a-layout-header class="layout-header-container">
           <a-icon
             v-if="!this.isGuide"
             class="trigger"
             :type="collapsed ? 'menu-unfold' : 'menu-fold'"
             @click="() => (collapsed = !collapsed)"
           />
-          关于作者
+          <a-button type="link" class="help-link">帮助</a-button>
         </a-layout-header>
         <a-layout-content
           id="scroller"
@@ -100,12 +100,21 @@ export default Vue.extend({
     this.$bus.$on("showLoading", (show: boolean) => {
       this.showLoading = show;
     });
-    // 判断用户是否存在设置了自动拉取逻辑,
-    // await updatePostList();
   },
 });
 </script>
 <style lang="less">
+.layout-header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff !important;
+  padding: 0 !important;
+  .help-link {
+    position: relative;
+    right: 5px;
+  }
+}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

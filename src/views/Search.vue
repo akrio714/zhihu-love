@@ -133,7 +133,7 @@ export default {
       list: [],
       fliterForm: {
         keywords: [],
-        gender: 1,
+        gender: null,
       },
       settingUpdateTime: 0,
       labelCol: { span: 5 },
