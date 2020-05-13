@@ -40,7 +40,7 @@ import PostSettingVo from "../services/model/PostSettingVo";
 import {
   saveOrUpdatePostSetting,
   saveSetting,
-  SettingForm,
+  SettingForm
 } from "../services/SettingService";
 import { showErrorMsg } from "../utils/fetch";
 // 第一次进入的引导页面
@@ -54,45 +54,45 @@ export default Vue.extend({
       radioStyle: {
         display: "block",
         height: "34px",
-        lineHeight: "34px",
+        lineHeight: "34px"
       },
       searchList: [
         {
           url: "https://www.zhihu.com/question/364035162/answer/973163598",
-          title: "2020年你的择偶标准是什么？",
+          title: "2020年你的择偶标准是什么？"
         },
         {
           url: "https://www.zhihu.com/question/280523155/answer/1038923064",
-          title: "你最真实（很少吐露）的择偶标准是什么？",
+          title: "你最真实（很少吐露）的择偶标准是什么？"
         },
         {
           url: "https://www.zhihu.com/question/304090066/answer/783313495",
-          title: "你的择偶标准是怎么样的？",
+          title: "你的择偶标准是怎么样的？"
         },
         {
           url: "https://www.zhihu.com/question/311378291/answer/804648946",
-          title: "天津的你，择偶的标准是怎样的？",
+          title: "天津的你，择偶的标准是怎样的？"
         },
         {
           url: "https://www.zhihu.com/question/309872833/answer/956414233",
-          title: "身在北京的你，择偶标准是怎样的",
+          title: "身在北京的你，择偶标准是怎样的"
         },
         {
           url: "https://www.zhihu.com/question/356957129/answer/929341654",
-          title: "研究生的你，择偶标准是什么？",
+          title: "研究生的你，择偶标准是什么？"
         },
         {
           url: "https://www.zhihu.com/question/308798869",
-          title: "上海的你，择偶的标准是怎样的？",
+          title: "上海的你，择偶的标准是怎样的？"
         },
         {
           url: "https://www.zhihu.com/question/310390277/answer/1143443473",
-          title: "西安的你，择偶的标准是怎样的？",
-        },
+          title: "西安的你，择偶的标准是怎样的？"
+        }
       ],
       form: {
         searchUrl: "", // 通过预选项进行的选择
-        customUrl: "", // 通过自定义项手动输入的url
+        customUrl: "" // 通过自定义项手动输入的url
       },
       oldClipboardText: "", // 上次保存在剪切板中的数据
       rules: {
@@ -100,7 +100,7 @@ export default Vue.extend({
           {
             required: true,
             message: "请任意选择一篇文章",
-            trigger: "blur",
+            trigger: "blur"
           },
           {
             asyncValidator(
@@ -128,10 +128,10 @@ export default Vue.extend({
                 }
               }
               callback();
-            },
-          },
-        ],
-      },
+            }
+          }
+        ]
+      }
     };
   },
   methods: {
@@ -164,7 +164,7 @@ export default Vue.extend({
             this.$bus.$emit("initSuccess", true);
             // 然后跳转到查询页面
             this.$router.push({
-              name: "SearchPage",
+              name: "SearchPage"
             });
           } catch (e) {
             showErrorMsg(e);
@@ -175,70 +175,83 @@ export default Vue.extend({
           return false;
         }
       });
-    },
+    }
   },
   created() {
-    // 能进入这个页面说明数据已经被清空了，那么直接隐藏左边菜单
-     this.$bus.$emit("initSuccess", false);
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log("页面被隐藏");
-      } else {
-        const currentClipborad = clipboard.readText();
-        // 判断当前剪切板数据是否和上次一致，如果一样就说明用户不想用这个，直接隐藏
-        if (currentClipborad === this.oldClipboardText) {
-          return;
-        }
-        // 获取剪切板数据，然后验证是否为有效url
-        const result = getQuestionInfoBy(currentClipborad);
-        if (result) {
-          getQuestionBy(result.qId).then(() => {
-            /**
-             * 判定剪切板中数据为有效url
-             * 这里分为2种情况
-             * 1.用户当前选中的为预选项，那么需要弹出提示进行确认
-             * 2.用户选在就是自定义项，那么在自定义url为空时自动带入，非空也需要弹出提示
-             *  */
-            let auto = false; // 是否为无提示自动带入
-            if (this.form.searchUrl === "custom" && !this.form.customUrl) {
-              auto = true;
+    try {
+      // 能进入这个页面说明数据已经被清空了，那么直接隐藏左边菜单
+      this.$bus.$emit("initSuccess", false);
+      const handleVisibilityChange = async () => {
+        if (document.hidden) {
+          console.log("页面被隐藏");
+        } else {
+          const currentClipborad = clipboard.readText();
+          // 判断当前剪切板数据是否和上次一致，如果一样就说明用户不想用这个，直接隐藏
+          if (currentClipborad === this.oldClipboardText) {
+            console.log(
+              `当前剪切板(${currentClipborad}和历史记录${this.oldClipboardText}相同`
+            );
+            return;
+          }
+          // 获取剪切板数据，然后验证是否为有效url
+          const result = getQuestionInfoBy(currentClipborad);
+          if (result) {
+            try {
+              this.$bus.$emit("showLoading", true);
+              await getQuestionBy(result.qId);
+              /**
+               * 判定剪切板中数据为有效url
+               * 这里分为2种情况
+               * 1.用户当前选中的为预选项，那么需要弹出提示进行确认
+               * 2.用户选在就是自定义项，那么在自定义url为空时自动带入，非空也需要弹出提示
+               *  */
+              let auto = false; // 是否为无提示自动带入
+              if (this.form.searchUrl === "custom" && !this.form.customUrl) {
+                auto = true;
+              }
+              // eslint-disable-next-line @typescript-eslint/no-this-alias
+              const _this = this;
+              if (auto) {
+                this.form.customUrl = currentClipborad; // 自动将url粘贴到剪切板
+                // 从新触发验证去掉错误提示
+                this.valdateUrl();
+              } else {
+                this.$confirm({
+                  content: `请问是否直接采用接切板中url(${currentClipborad})`,
+                  okText: "确认",
+                  cancelText: "取消",
+                  onOk() {
+                    // 自动切换到自定义选项
+                    _this.form.searchUrl = "custom";
+                    // 自动填写url
+                    _this.form.customUrl = currentClipborad;
+                    // 从新触发验证去掉错误提示
+                    _this.valdateUrl();
+                  }
+                });
+              }
+              // 更新历史剪切板数据
+              this.oldClipboardText = currentClipborad;
+            } catch (e) {
+              showErrorMsg(e);
+            } finally {
+              this.$bus.$emit("showLoading", false);
             }
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
-            const _this = this;
-            if (auto) {
-              this.form.customUrl = currentClipborad; // 自动将url粘贴到剪切板
-              // 从新触发验证去掉错误提示
-              this.valdateUrl();
-            } else {
-              this.$confirm({
-                content: `请问是否直接采用接切板中url(${currentClipborad})`,
-                okText: "确认",
-                cancelText: "取消",
-                onOk() {
-                  // 自动切换到自定义选项
-                  _this.form.searchUrl = "custom";
-                  // 自动填写url
-                  _this.form.customUrl = currentClipborad;
-                  // 从新触发验证去掉错误提示
-                  _this.valdateUrl();
-                },
-              });
-            }
-            // 更新历史剪切板数据
-            this.oldClipboardText = currentClipborad;
-          });
+          }
+          console.log("页面被激活");
         }
-        console.log("页面被激活");
-      }
-    };
-    // 去掉事件监听主要是调试所需，因为开发环境中自动更新会多次触发created,造成多次绑定
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
-    // 增加自动通过剪切板数据自动填入自定义项的逻辑
-    document.addEventListener(
-      "visibilitychange",
-      handleVisibilityChange,
-      false
-    );
-  },
+      };
+      // 去掉事件监听主要是调试所需，因为开发环境中自动更新会多次触发created,造成多次绑定
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      // 增加自动通过剪切板数据自动填入自定义项的逻辑
+      document.addEventListener(
+        "visibilitychange",
+        handleVisibilityChange,
+        false
+      );
+    } catch (e) {
+      showErrorMsg(e);
+    }
+  }
 });
 </script>
