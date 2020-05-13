@@ -14,5 +14,7 @@
 
 ![](resources/guide_3.jpg)
 
+默认会拉取最近1月的帖子，进入查询页面点击右下角按钮实现条件过滤
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
