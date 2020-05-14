@@ -48,7 +48,7 @@ export default Vue.extend({
   name: "GuidePage",
   data() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const _this = this;
+    const _this: any = this;
     return {
       // radio纵向排列样式
       radioStyle: {
