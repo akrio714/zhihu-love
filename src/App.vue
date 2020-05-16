@@ -79,6 +79,7 @@ export default Vue.extend({
     },
   },
   async created() {
+    // 每10分钟检测一遍
     const settingForm = getSettingForm();
     // 第一次进入，直接锁死setting页面
     if (!settingForm || !settingForm.searchId) {

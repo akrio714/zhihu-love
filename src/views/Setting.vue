@@ -27,7 +27,7 @@
           </a-select-option>
         </a-select>
       </a-form-model-item>
-      <!-- <a-form-model-item
+      <a-form-model-item
         label="自动更新"
         extra="自动更新最新发布的帖子，并进行通知"
       >
@@ -39,7 +39,7 @@
             default-checked
           />
         </a-radio-group>
-      </a-form-model-item> -->
+      </a-form-model-item>
       <a-form-model-item label="帖子范围" extra="拉取帖子的时间范围">
         <a-radio-group v-model="form.max">
           <a-radio :value="1">
