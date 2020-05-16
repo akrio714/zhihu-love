@@ -65,6 +65,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { getSettingForm } from "./services/SettingService";
+import { autoUpload } from "./services/PostService";
 import { shell } from "electron";
 export default Vue.extend({
   name: "LayoutPage",
@@ -86,7 +87,12 @@ export default Vue.extend({
     },
   },
   async created() {
+    await autoUpload();
     // 每10分钟检测一遍
+    setInterval(async () => {
+      // 拉取setting数据
+      await autoUpload();
+    }, 10 * 60 * 1000);
     const settingForm = getSettingForm();
     // 第一次进入，直接锁死setting页面
     if (!settingForm || !settingForm.searchId) {

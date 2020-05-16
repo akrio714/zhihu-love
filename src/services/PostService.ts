@@ -3,6 +3,7 @@ import AnswerVo from "../services/model/AnswerVo";
 import { db } from "../utils/db";
 import QuestionVo from "./model/QuestionVo";
 import { PostSettingType } from "./model/PostSettingVo";
+import { getSettingForm } from "./SettingService";
 // 获取问题答案 查询条件
 export class SearchAnswerListParams {
   searchId = ""; // 查询帖子的id
@@ -94,6 +95,10 @@ export function getQuestionInfoBy(url: string) {
   }
   return null;
 }
+/**
+ * 获取问题信息
+ * @param qId 问题id
+ */
 export async function getQuestion(qId: string) {
   const { data } = await axios.get(
     `https://www.zhihu.com/api/v4/questions/${qId}`,
@@ -104,4 +109,70 @@ export async function getQuestion(qId: string) {
     }
   );
   return new QuestionVo(data);
+}
+/**
+ * 尝试自动更新搜索结果
+ */
+export async function autoUpload() {
+  // 首先判断用户是否开启了自动更新配置
+  const settingForm = getSettingForm();
+  // 说明项目还未初始化 或者就没开自动更新开关 那么就不做更新
+  if (!settingForm || !settingForm.searchId || !settingForm.autoUpdate) {
+    return;
+  }
+  // 拉取当前帖子中最新一条记录的时间
+  const result = await db.posts
+    .find({})
+    .sort({ updated_time: -1 })
+    .skip(0)
+    .limit(1); // 按照时间排序
+  // 防止1条数据都没有
+  if (result.length === 0) {
+    return;
+  }
+  const lastUpdateTime = (result[0] as any).updated_time;
+  let searchParams = new SearchAnswerListParams();
+  searchParams.searchId = settingForm.searchId;
+  // 预设的待插入的答案
+  const addList: any[] = [];
+  // 下面为死循环，此字段用于控制跳出逻辑 即拉取所有最新帖子后进行退出
+  let isEnd = false;
+  for (let i = 0; true; i += searchParams.limit) {
+    // 预设当前查询条件
+    searchParams.offset = i;
+    // 查询获取分页答案
+    const {data:answerList} = await searchAnswerList(searchParams);
+    debugger
+    answerList.forEach((answer: any) => {
+      // 判断是否最新的帖子
+      if (answer.updated_time > lastUpdateTime) {
+        addList.push(answer);
+      } else {
+        isEnd = true;
+        return false;
+      }
+    });
+    if (isEnd) {
+      break;
+    }
+  }
+  // 遍历当前待添加答案
+  for (let i = 0; i < addList.length; i++) {
+    const answer: any = addList[0];
+    // 判断当前项是否已存在，存在则更新，不存在则添加
+    const one = await db.posts.findOne({ id: answer.id });
+    if (one) {
+      // 存在则进行更新
+      await db.posts.update({ id: answer.id }, answer, {
+        multi: false,
+      });
+    } else {
+      // 不存在则进行添加
+      await db.posts.insert(answer);
+    }
+  }
+  // 如果真的更新了数据，则更新上次更新时间，这样到查询页面会重新触发查询
+  if(addList.length > 0){
+
+  }
 }
