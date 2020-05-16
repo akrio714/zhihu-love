@@ -6,11 +6,9 @@
 
 ##  下载
 
-windows
+windows 暂未支持
 
-
-
-macos
+[macos](https://github.com/akrio714/zhihu-love/releases)
 
 
 

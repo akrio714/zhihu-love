@@ -1,6 +1,6 @@
 {
   "name": "love",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -21,7 +21,6 @@
     "lodash": "^4.17.15",
     "moment": "^2.25.1",
     "nedb-promises": "^4.0.3",
-    "nodejieba": "^2.4.1",
     "swiper": "^5.3.8",
     "vue": "^2.6.11",
     "vue-awesome-swiper": "^4.1.1",
@@ -40,7 +39,6 @@
     "@vue/cli-service": "~4.3.0",
     "@vue/eslint-config-prettier": "^6.0.0",
     "@vue/eslint-config-typescript": "^5.0.2",
-    "builder-util": "^22.6.0",
     "electron": "^6.0.0",
     "eslint": "^6.7.2",
     "eslint-plugin-prettier": "^3.1.1",
