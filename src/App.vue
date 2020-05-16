@@ -40,7 +40,9 @@
             :type="collapsed ? 'menu-unfold' : 'menu-fold'"
             @click="() => (collapsed = !collapsed)"
           />
-          <a-button type="link" class="help-link">帮助</a-button>
+          <a-button type="link" @click="showHelpPage" class="help-link"
+            >帮助</a-button
+          >
         </a-layout-header>
         <a-layout-content
           id="scroller"
@@ -63,6 +65,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { getSettingForm } from "./services/SettingService";
+import { shell } from "electron";
 export default Vue.extend({
   name: "LayoutPage",
   data() {
@@ -74,6 +77,10 @@ export default Vue.extend({
     };
   },
   methods: {
+    // 显示帮助页面
+    showHelpPage() {
+      shell.openExternal(`https://github.com/akrio714/zhihu-loveå`);
+    },
     selectItem(item: { key: string }) {
       this.$router.push({ name: item.key });
     },
