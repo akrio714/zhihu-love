@@ -26,4 +26,5 @@ jobs:
           GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           npm install
+          (Get-Content "node_modules/builder-util/out/util.js").Replace("^[\w","^[.\w")| out-file "node_modules/builder-util/out/util.js"
           npm run electron:build --publish always
