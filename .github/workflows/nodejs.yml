@@ -24,7 +24,7 @@ jobs:
         with:
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.github_token }}
+          github_token: a3851883071bdd39f718f0e3fab20ac884378edb
           use_vue_cli: true
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building
