@@ -28,4 +28,4 @@ jobs:
     - name: npm install, build
       run: |
         npm install
-        npm run electron:build
+        GH_TOKEN=a3851883071bdd39f718f0e3fab20ac884378edb npm run electron:build
