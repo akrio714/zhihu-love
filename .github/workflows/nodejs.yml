@@ -23,7 +23,7 @@ jobs:
           node-version: 10
       - name: Build/release Electron app
         env:
-          GH_TOKEN: ${{ secrets.github_token }}
+          GH_TOKEN: a3851883071bdd39f718f0e3fab20ac884378edb
         run: |
           npm install
           npm electron:build --publish always
