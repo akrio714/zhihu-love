@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [windows-2019]
 
     steps:
       - name: Check out Git repository
@@ -23,7 +23,7 @@ jobs:
           node-version: 10
       - name: Build/release Electron app
         env:
-          GH_TOKEN: a3851883071bdd39f718f0e3fab20ac884378edb
+          GH_TOKEN: ${{ secrets.github_token }}
         run: |
           npm install
           npm electron:build --publish always
