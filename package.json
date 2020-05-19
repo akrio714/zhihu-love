@@ -1,10 +1,10 @@
 {
   "name": "love",
-  "version": "1.0.8",
+  "version": "1.0.11",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service electron:build",
     "lint": "vue-cli-service lint",
     "electron:build": "vue-cli-service electron:build",
     "electron:serve": "vue-cli-service electron:serve",
