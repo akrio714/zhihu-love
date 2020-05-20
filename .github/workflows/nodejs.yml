@@ -1,14 +1,17 @@
 name: Build/release
 
-on: push
-
+on: 
+  push:
+    tags:
+      - 'v*.*.*'
+  
 jobs:
   release:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [macos-latest]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
       - name: Check out Git repository
