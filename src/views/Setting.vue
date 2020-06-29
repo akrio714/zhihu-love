@@ -11,20 +11,23 @@
         label="帖子"
         extra="需分析的帖子"
         placeholder="请选择需要分析的帖子"
-        prop="searchId"
+        prop="searchList"
       >
         <a-select
+          mode="multiple"
           v-if="searchList.length > 0"
-          v-model="form.searchId"
+          v-model="form.searchList"
           style="width: 440px"
           placeholder="请选择需要分析的帖子"
         >
           <a-select-option
             v-for="searchItem in searchList"
+            :value="{ id: searchItem.id, type: searchItem.type }"
             :key="searchItem.id"
+            >{{ searchItem.question }}（{{
+              `共有${searchItem.answerCount}条`
+            }}）</a-select-option
           >
-            {{ searchItem.question }}（{{ `共有${searchItem.answerCount}条` }}）
-          </a-select-option>
         </a-select>
       </a-form-model-item>
       <!-- <a-form-model-item
@@ -39,21 +42,13 @@
             default-checked
           />
         </a-radio-group>
-      </a-form-model-item> -->
+      </a-form-model-item>-->
       <a-form-model-item label="帖子范围" extra="拉取帖子的时间范围">
         <a-radio-group v-model="form.max">
-          <a-radio :value="1">
-            最近1个月
-          </a-radio>
-          <a-radio :value="3">
-            最近3个月
-          </a-radio>
-          <a-radio :value="6">
-            最近半年
-          </a-radio>
-          <a-radio :value="-1">
-            全部(慎用，可能会被制裁)
-          </a-radio>
+          <a-radio :value="1">最近1个月</a-radio>
+          <a-radio :value="3">最近3个月</a-radio>
+          <a-radio :value="6">最近半年</a-radio>
+          <a-radio :value="-1">全部(慎用，可能会被制裁)</a-radio>
         </a-radio-group>
       </a-form-model-item>
       <a-form-model-item
@@ -84,12 +79,10 @@
         </a-popconfirm>
       </a-form-model-item>
       <a-form-model-item :wrapper-col="{ span: 14, offset: 3 }">
-        <a-button type="primary" @click="onSubmit">
-          保存
-        </a-button>
-        <a-button @click="resetClick" style="margin-left: 10px;">
-          恢复默认
-        </a-button>
+        <a-button type="primary" @click="onSubmitClick">保存</a-button>
+        <a-button @click="resetClick" style="margin-left: 10px;"
+          >恢复默认</a-button
+        >
       </a-form-model-item>
     </a-form-model>
   </div>
@@ -106,74 +99,80 @@ import {
 } from "../services/SettingService";
 import { showErrorMsg } from "../utils/fetch";
 import PostSettingVo from "../services/model/PostSettingVo";
-export default Vue.extend({
-  name: "SettingPage",
-  data() {
-    return {
-      labelCol: { span: 3 },
-      wrapperCol: { span: 20 },
-      rules: {
-        searchId: [
-          {
-            required: true,
-            message: "请选择一个帖子",
-            trigger: ["change", "blur"],
-          },
-        ],
+import { Ref, Component } from "vue-property-decorator";
+import { FormModel } from "ant-design-vue";
+@Component({})
+export default class SettingPage extends Vue {
+  @Ref("postSettingForm")
+  settingsForm!: FormModel;
+  labelCol = { span: 3 };
+  wrapperCol = { span: 20 };
+  rules = {
+    searchId: [
+      {
+        required: true,
+        message: "请选择一个帖子",
+        trigger: ["change", "blur"],
       },
-      searchList: new Array<PostSettingVo>(),
-      form: new SettingForm(),
-    };
-  },
-  methods: {
-    async onSubmit() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.$refs.settingsForm as any).validate(async (valid: boolean) => {
-        if (valid) {
-          try {
-            this.$bus.$emit("showLoading", true);
-            const save = await saveSetting(this.form);
-            // 如果更新了数据且开启了通知则提示信息
-            if (save && this.form.notification) {
-              new Notification("提示", { body: `一共获取到${save}条帖子` });
-            }
-          } catch (e) {
-            showErrorMsg(e);
-          } finally {
-            this.$bus.$emit("showLoading", false);
+    ],
+  };
+  searchList: PostSettingVo[] = [];
+  form = new SettingForm();
+  /**
+   * 保存按钮点击
+   */
+  async onSubmitClick() {
+    this.settingsForm.validate(async (valid) => {
+      if (valid) {
+        try {
+          this.$bus.$emit("showLoading", true);
+          const save = await saveSetting(this.form);
+          // 如果更新了数据且开启了通知则提示信息
+          if (save && this.form.notification) {
+            new Notification("提示", { body: `一共获取到${save}条帖子` });
           }
-        } else {
-          return false;
+        } catch (e) {
+          showErrorMsg(e);
+        } finally {
+          this.$bus.$emit("showLoading", false);
         }
-      });
-    },
-    resetClick() {
-      this.form = new SettingForm();
-    },
-    async clearAllClick() {
-      try {
-        this.form = await clear();
-        // 显示左侧隐藏的菜单
-        this.$router.push({ name: "GuidePage" });
-      } catch (e) {
-        showErrorMsg(e);
+      } else {
+        return false;
       }
-    },
-    /**
-     * 重新拉取帖子的信息
-     */
-    async reloadPostInfo() {
-      this.searchList = await getPostSettingList();
-    },
-  },
+    });
+  }
+  /**
+   * 回复默认点击事件
+   */
+  resetClick() {
+    this.form = new SettingForm();
+  }
+  /**
+   * 清空缓存按钮点击事件
+   */
+  async clearAllClick() {
+    try {
+      this.form = await clear();
+      // 显示左侧隐藏的菜单
+      this.$router.push({ name: "GuidePage" });
+    } catch (e) {
+      showErrorMsg(e);
+    }
+  }
+  /**
+   * 重新拉取帖子的信息
+   */
+  async reloadPostInfo() {
+    this.searchList = await getPostSettingList();
+  }
   async activated() {
     // 判断当前
     await this.reloadPostInfo();
     const form = getSettingForm() || new SettingForm();
     this.form = form;
     //
-  },
-});
+  }
+}
 </script>
 
 <style></style>

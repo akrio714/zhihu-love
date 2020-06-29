@@ -5,10 +5,16 @@ import {
   searchAnswerList,
   getQuestionInfoBy,
   getQuestionBy,
+  getClubBy,
 } from "../services/PostService";
 import moment from "moment";
-import PostSettingVo from "./model/PostSettingVo";
+import PostSettingVo, { PostSettingType } from "./model/PostSettingVo";
 export const SETTING_FORM = "SETTING_FORM";
+import _ from 'lodash';
+export class SettingFormSearch {
+  id = "";
+  type = PostSettingType.Answer;
+}
 /**
  * 保存setting的表单数据
  */
@@ -16,7 +22,7 @@ export class SettingForm {
   autoUpdate = true; // 是否自动更新数据
   notification = false; // 是否开启系统通知显示
   max = 1; // 分析帖子的数量
-  searchId = ""; // 需要用户分析的帖子的id
+  searchList: SettingFormSearch[] = []; // 需要用户分析的帖子的id
   updated = new Date().getTime(); // 上次更新时间
 }
 /**
@@ -42,13 +48,12 @@ export async function saveSetting(
   let needReloadPost = false;
   // 如果没有历史记录 或者帖子，拉取数量，排序条件发生改变，那么就重新拉取帖子
   if (oldForm) {
-    needReloadPost =
-      oldForm.searchId !== form.searchId || oldForm.max !== form.max;
+    needReloadPost = _.isEqual(oldForm.searchList,form.searchList) || oldForm.max !== form.max;
     // 判断是否需要从新拉帖子
     if (needReloadPost) {
       // 初始化查询answer查询条件
       let searchParams = new SearchAnswerListParams();
-      searchParams.searchId = form.searchId;
+      searchParams.searchId = form.searchList[0].id;
       let list: any[] = [];
       // 计算截止时间
       const abortTime = moment()
@@ -128,15 +133,21 @@ export async function saveOrUpdatePostSetting(form: PostSettingVo) {
   const info = getQuestionInfoBy(form.url);
   if (info) {
     // 判断是否以前添加过
-    const one = await db.postSettings.findOne({ id: info.qId });
+    const one = await db.postSettings.findOne({ id: info.id });
     if (one) {
       throw new Error(`该帖子已经添加过了，无需再次添加`);
     }
-    form.id = info.qId;
+    form.id = info.id;
     form.type = info.type;
-    const question = await getQuestionBy(form.id);
-    form.question = question.title;
-    form.answerCount = question.answerCount;
+    if (form.type === PostSettingType.Answer) {
+      const question = await getQuestionBy(form.id);
+      form.question = question.title;
+      form.answerCount = question.answerCount;
+    } else if (form.type === PostSettingType.Club) {
+      const club = await getClubBy(form.id);
+      form.question = club.title;
+      form.answerCount = club.answerCount;
+    }
     await db.postSettings.insert(form);
     return form;
   }

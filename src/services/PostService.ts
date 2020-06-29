@@ -2,6 +2,7 @@ import axios from "axios";
 import AnswerVo from "../services/model/AnswerVo";
 import { db } from "../utils/db";
 import QuestionVo from "./model/QuestionVo";
+import ClubVo from "./model/ClubVo";
 import { PostSettingType } from "./model/PostSettingVo";
 // 获取问题答案 查询条件
 export class SearchAnswerListParams {
@@ -10,7 +11,12 @@ export class SearchAnswerListParams {
   limit = 20; // 一次请求数量 最大值20
   offset = 0; // 查询的页码
 }
-
+// 获取Club 查询条件
+export class SearchClubListParams {
+  cid = ""; // 查询帖子的id
+  limit = 20; // 一次请求数量 最大值20
+  offset = 0; // 查询的页码
+}
 /**
  * 获取问题答案
  * @param params 查询条件
@@ -60,6 +66,25 @@ export async function getPostList(params: postParams) {
     });
   return list;
 }
+/**
+ * 获取圈子帖子
+ * @param cId  问题id
+ */
+export async function getClubBy(cId: string) {
+  const { data } = await axios.get(
+    `https://www.zhihu.com/api/v4/clubs/${cId}/posts`,
+    {
+      params: {
+        include: `data[*].answer_count,author,follower_count`,
+      },
+    }
+  );
+  return new ClubVo(data);
+}
+/**
+ * 获取普通问答帖子
+ * @param qId  问题id
+ */
 export async function getQuestionBy(qId: string) {
   const { data } = await axios.get(
     `https://www.zhihu.com/api/v4/questions/${qId}`,
@@ -71,11 +96,31 @@ export async function getQuestionBy(qId: string) {
   );
   return new QuestionVo(data);
 }
+/**
+ * 检查url是否有效
+ * @param url 添加帖子的url
+ */
+export async function checkUrlBy(url: string) {
+  const params = getQuestionInfoBy(url);
+  if (params) {
+    if (params.type === PostSettingType.Answer) {
+      await getQuestionBy(params.id);
+    } else if (params.type === PostSettingType.Club) {
+      await getClubBy(params.id);
+    } else {
+      return false;
+    }
+    return true
+  } else {
+    return false;
+  }
+}
 // 根据url获取当前问题的id和类型
 export function getQuestionInfoBy(url: string) {
   // 分析url中的id和类型
   const questionSplit = url.split("https://www.zhihu.com/question/");
-  let qId = "";
+  const clubSplit = url.split("https://www.zhihu.com/club/");
+  let id = "";
   let type = PostSettingType.Answer;
   // 如果能拆出来2个说明是普通问题
   if (questionSplit.length === 2) {
@@ -86,22 +131,21 @@ export function getQuestionInfoBy(url: string) {
      * 其中第二种需要在去掉答案id部分的字符串
      */
     const strs = questionSplit[1].split("/answer/");
-    qId = strs[0];
+    id = strs[0];
+  } else if (clubSplit.length === 2) {
+    /**
+     * 圈子url有2种各式
+     * 1.https://www.zhihu.com/club/1139247351129653248 直接进入的问题页面，最后数字部分就是问题id
+     * 2.https://www.zhihu.com/club/1139247351129653248/post/1260663117341732864?from=list 直接进入某个帖子回答，这时候后面会跟帖子id
+     * 其中第二种需要在去掉圈子某个帖子id部分的字符串
+     */
+    const strs = clubSplit[1].split("/post/");
+    id = strs[0];
+    type = PostSettingType.Club;
   }
   // 如果qId没有分析出来则说明url有问题
-  if (qId) {
-    return { qId, type };
+  if (id) {
+    return { id, type };
   }
   return null;
-}
-export async function getQuestion(qId: string) {
-  const { data } = await axios.get(
-    `https://www.zhihu.com/api/v4/questions/${qId}`,
-    {
-      params: {
-        include: `data[*].answer_count,author,follower_count`,
-      },
-    }
-  );
-  return new QuestionVo(data);
 }

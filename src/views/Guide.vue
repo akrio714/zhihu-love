@@ -40,7 +40,8 @@ import PostSettingVo from "../services/model/PostSettingVo";
 import {
   saveOrUpdatePostSetting,
   saveSetting,
-  SettingForm
+  SettingForm,
+  SettingFormSearch,
 } from "../services/SettingService";
 import { showErrorMsg } from "../utils/fetch";
 // 第一次进入的引导页面
@@ -54,45 +55,45 @@ export default Vue.extend({
       radioStyle: {
         display: "block",
         height: "34px",
-        lineHeight: "34px"
+        lineHeight: "34px",
       },
       searchList: [
         {
           url: "https://www.zhihu.com/question/364035162/answer/973163598",
-          title: "2020年你的择偶标准是什么？"
+          title: "2020年你的择偶标准是什么？",
         },
         {
           url: "https://www.zhihu.com/question/280523155/answer/1038923064",
-          title: "你最真实（很少吐露）的择偶标准是什么？"
+          title: "你最真实（很少吐露）的择偶标准是什么？",
         },
         {
           url: "https://www.zhihu.com/question/304090066/answer/783313495",
-          title: "你的择偶标准是怎么样的？"
+          title: "你的择偶标准是怎么样的？",
         },
         {
           url: "https://www.zhihu.com/question/311378291/answer/804648946",
-          title: "天津的你，择偶的标准是怎样的？"
+          title: "天津的你，择偶的标准是怎样的？",
         },
         {
           url: "https://www.zhihu.com/question/309872833/answer/956414233",
-          title: "身在北京的你，择偶标准是怎样的"
+          title: "身在北京的你，择偶标准是怎样的",
         },
         {
           url: "https://www.zhihu.com/question/356957129/answer/929341654",
-          title: "研究生的你，择偶标准是什么？"
+          title: "研究生的你，择偶标准是什么？",
         },
         {
           url: "https://www.zhihu.com/question/308798869",
-          title: "上海的你，择偶的标准是怎样的？"
+          title: "上海的你，择偶的标准是怎样的？",
         },
         {
           url: "https://www.zhihu.com/question/310390277/answer/1143443473",
-          title: "西安的你，择偶的标准是怎样的？"
-        }
+          title: "西安的你，择偶的标准是怎样的？",
+        },
       ],
       form: {
         searchUrl: "", // 通过预选项进行的选择
-        customUrl: "" // 通过自定义项手动输入的url
+        customUrl: "", // 通过自定义项手动输入的url
       },
       oldClipboardText: "", // 上次保存在剪切板中的数据
       rules: {
@@ -100,7 +101,7 @@ export default Vue.extend({
           {
             required: true,
             message: "请任意选择一篇文章",
-            trigger: "blur"
+            trigger: "blur",
           },
           {
             asyncValidator(
@@ -116,7 +117,7 @@ export default Vue.extend({
                 }
                 const result = getQuestionInfoBy(customUrl);
                 if (result) {
-                  getQuestionBy(result.qId).then(() => {
+                  getQuestionBy(result.id).then(() => {
                     callback();
                   });
                 } else {
@@ -128,10 +129,10 @@ export default Vue.extend({
                 }
               }
               callback();
-            }
-          }
-        ]
-      }
+            },
+          },
+        ],
+      },
     };
   },
   methods: {
@@ -154,17 +155,20 @@ export default Vue.extend({
               postForm.url = this.form.searchUrl;
             }
             // 保存Post信息
-            const { id } = await saveOrUpdatePostSetting(postForm);
+            const { id, type } = await saveOrUpdatePostSetting(postForm);
             // 然后为基础设置给定一个初始值，并帮他把当前搜索的帖子填上
             const settingForm = new SettingForm();
+            const select = new SettingFormSearch();
+            select.id = id;
+            select.type = type;
             // 将刚刚保存post信息中的id自动进行填写
-            settingForm.searchId = id;
+            settingForm.searchList = [select];
             await saveSetting(settingForm);
             // 显示左侧隐藏的菜单
             this.$bus.$emit("initSuccess", true);
             // 然后跳转到查询页面
             this.$router.push({
-              name: "SearchPage"
+              name: "SearchPage",
             });
           } catch (e) {
             showErrorMsg(e);
@@ -175,7 +179,7 @@ export default Vue.extend({
           return false;
         }
       });
-    }
+    },
   },
   created() {
     try {
@@ -198,7 +202,7 @@ export default Vue.extend({
           if (result) {
             try {
               this.$bus.$emit("showLoading", true);
-              await getQuestionBy(result.qId);
+              await getQuestionBy(result.id);
               /**
                * 判定剪切板中数据为有效url
                * 这里分为2种情况
@@ -227,7 +231,7 @@ export default Vue.extend({
                     _this.form.customUrl = currentClipborad;
                     // 从新触发验证去掉错误提示
                     _this.valdateUrl();
-                  }
+                  },
                 });
               }
               // 更新历史剪切板数据
@@ -252,6 +256,6 @@ export default Vue.extend({
     } catch (e) {
       showErrorMsg(e);
     }
-  }
+  },
 });
 </script>

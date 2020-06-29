@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-table :data-source="list" :row-key="(record) => record.id">
+    <a-table :data-source="list" :row-key="record => record.id">
       <a-table-column title="key" data-index="id" />
       <a-table-column title="问题" data-index="question">
         <template slot-scope="question, row">
@@ -21,12 +21,8 @@
       </a-table-column>
       <a-table-column title="类型" data-index="type">
         <template slot-scope="type">
-          <a-tag v-if="type === 0" color="#f50">
-            问答帖
-          </a-tag>
-          <a-tag v-if="type === 1" color="#2db7f5">
-            圈子
-          </a-tag>
+          <a-tag v-if="type === 0" color="#f50">问答帖</a-tag>
+          <a-tag v-if="type === 1" color="#2db7f5">圈子</a-tag>
         </template>
       </a-table-column>
       <a-table-column title="操作">
@@ -66,9 +62,7 @@
           <a-input v-model="postForm.url" placeholder="请输入问题或者圈子url" />
         </a-form-model-item>
         <a-form-model-item :wrapper-col="{ span: 14, offset: 2 }">
-          <a-button type="danger" :loading="saveLoading" @click="saveClick">
-            保存
-          </a-button>
+          <a-button type="danger" :loading="saveLoading" @click="saveClick">保存</a-button>
         </a-form-model-item>
       </a-form-model>
     </a-drawer>
@@ -77,114 +71,111 @@
 <script lang="ts">
 import Vue from "vue";
 import PostSettingVo from "../services/model/PostSettingVo";
-import { getQuestionBy, getQuestionInfoBy } from "../services/PostService";
+import { getQuestionBy, checkUrlBy } from "../services/PostService";
 import { shell } from "electron";
 import {
   saveOrUpdatePostSetting,
   getPostSettingList,
-  removePostSetting,
+  removePostSetting
 } from "../services/SettingService";
 import { showErrorMsg } from "../utils/fetch";
-export default Vue.extend({
-  name: "PostPage",
-  data() {
-    return {
-      rules: {
-        url: [
-          {
-            required: true,
-            message: "请输入文章的url地址",
-            trigger: "blur",
-          },
-          {
-            asyncValidator(
-              rule: unknown,
-              value: string,
-              callback: (info?: unknown) => {}
-            ) {
-              const result = getQuestionInfoBy(value);
-              if (result) {
-                getQuestionBy(result.qId).then(() => {
-                  callback();
-                });
-              } else {
-                callback(
-                  new Error(
-                    "这是一个无效的链接，请在浏览器中检验该链接是否可以打开"
-                  )
-                );
-              }
-            },
-          },
-        ],
+import { FormModel } from "ant-design-vue";
+import { Ref, Component } from "vue-property-decorator";
+@Component({})
+export default class PostPage extends Vue {
+  @Ref("postSettingForm")
+  postSettingForm!: FormModel;
+  rules = {
+    url: [
+      {
+        required: true,
+        message: "请输入文章的url地址",
+        trigger: "blur"
       },
-      list: new Array<PostSettingVo>(),
-      postForm: new PostSettingVo(), // 关注问题列表的表单
-      saveLoading: false, // 表单保存的loading
-      showFormModal: false, // 是否显示表单的弹窗
-      labelCol: { span: 5 },
-      wrapperCol: { span: 18 },
-    };
-  },
-  methods: {
-    /**
-     * 打开浏览器阅读原文
-     */
-    async openBower(url: string) {
-      shell.openExternal(url);
-    },
-    /**
-     * 保存按钮点击事件
-     */
-    async saveClick() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this.$refs.postSettingForm as any).validate(async (valid: boolean) => {
-        if (valid) {
-          try {
-            this.saveLoading = true;
-            await saveOrUpdatePostSetting(this.postForm);
-            // 更新列表数据
-            this.list = await getPostSettingList();
-            // 关闭表单
-            this.showFormModal = false;
-          } catch (e) {
-            showErrorMsg(e);
-          } finally {
-            this.saveLoading = false;
-          }
+      {
+        asyncValidator(
+          rule: unknown,
+          value: string,
+          callback: (info?: unknown) => {}
+        ) {
+          checkUrlBy(value).then(valid => {
+            if (valid) {
+              callback();
+            } else {
+              callback(
+                new Error(
+                  "这是一个无效的链接，请在浏览器中检验该链接是否可以打开"
+                )
+              );
+            }
+            callback();
+          });
         }
-      });
-    },
-    async delPostSetting(id: string) {
-      try {
-        await removePostSetting(id);
-        this.list = await getPostSettingList();
-      } catch (e) {
-        showErrorMsg(e);
       }
-    },
-    /**
-     * 添加按钮点击事件
-     */
-    addClick() {
-      // 重置添加表单
-      this.postForm = new PostSettingVo();
-      this.showFormModal = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const form: any = this.$refs.postSettingForm;
-      form.resetFields();
-    },
-    /**
-     * 隐藏表单弹窗
-     */
-    closeFormModal() {
-      this.showFormModal = false;
-    },
-  },
+    ]
+  };
+  list: PostSettingVo[] = [];
+  postForm = new PostSettingVo(); // 关注问题列表的表单
+  saveLoading = false; // 表单保存的loading
+  showFormModal = false; // 是否显示表单的弹窗
+  labelCol = { span: 5 };
+  wrapperCol = { span: 18 };
+  /**
+   * 打开浏览器阅读原文
+   */
+  async openBower(url: string) {
+    shell.openExternal(url);
+  }
+  /**
+   * 保存按钮点击事件
+   */
+  async saveClick() {
+    this.postSettingForm.validate(async valid => {
+      if (valid) {
+        try {
+          this.saveLoading = true;
+          await saveOrUpdatePostSetting(this.postForm);
+          // 更新列表数据
+          this.list = await getPostSettingList();
+          // 关闭表单
+          this.showFormModal = false;
+        } catch (e) {
+          showErrorMsg(e);
+        } finally {
+          this.saveLoading = false;
+        }
+      }
+    });
+  }
+  async delPostSetting(id: string) {
+    try {
+      await removePostSetting(id);
+      this.list = await getPostSettingList();
+    } catch (e) {
+      showErrorMsg(e);
+    }
+  }
+  /**
+   * 添加按钮点击事件
+   */
+  addClick() {
+    // 重置添加表单
+    this.postForm = new PostSettingVo();
+    this.showFormModal = true;
+    this.$nextTick(() => {
+      this.postSettingForm.resetFields();
+    });
+  }
+  /**
+   * 隐藏表单弹窗
+   */
+  closeFormModal() {
+    this.showFormModal = false;
+  }
   async activated() {
     this.list = await getPostSettingList();
-  },
-});
+  }
+}
 </script>
 <style lang="less" scoped>
 .del-icon {

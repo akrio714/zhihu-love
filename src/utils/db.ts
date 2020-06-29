@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-05-04 21:06:26
- * @LastEditTime: 2020-05-05 08:04:20
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /love/src/utils/db.ts
- */
 import Datastore from 'nedb-promises'
 import { remote } from 'electron'
 

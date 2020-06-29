@@ -79,7 +79,7 @@ export default Vue.extend({
   methods: {
     // 显示帮助页面
     showHelpPage() {
-      shell.openExternal(`https://github.com/akrio714/zhihu-loveå`);
+      shell.openExternal(`https://github.com/akrio714/zhihu-love`);
     },
     selectItem(item: { key: string }) {
       this.$router.push({ name: item.key });
@@ -88,7 +88,7 @@ export default Vue.extend({
   async created() {
     const settingForm = getSettingForm();
     // 第一次进入，直接锁死setting页面
-    if (!settingForm || !settingForm.searchId) {
+    if (!settingForm || settingForm.searchList.length === 0) {
       this.$router.push({ name: "GuidePage" });
       this.isGuide = true;
     } else {
