@@ -40,8 +40,7 @@ import PostSettingVo from "../services/model/PostSettingVo";
 import {
   saveOrUpdatePostSetting,
   saveSetting,
-  SettingForm,
-  SettingFormSearch,
+  SettingForm
 } from "../services/SettingService";
 import { showErrorMsg } from "../utils/fetch";
 // 第一次进入的引导页面
@@ -155,14 +154,11 @@ export default Vue.extend({
               postForm.url = this.form.searchUrl;
             }
             // 保存Post信息
-            const { id, type } = await saveOrUpdatePostSetting(postForm);
+            const { id } = await saveOrUpdatePostSetting(postForm);
             // 然后为基础设置给定一个初始值，并帮他把当前搜索的帖子填上
             const settingForm = new SettingForm();
-            const select = new SettingFormSearch();
-            select.id = id;
-            select.type = type;
             // 将刚刚保存post信息中的id自动进行填写
-            settingForm.searchList = [select];
+            settingForm.searchList = [id];
             await saveSetting(settingForm);
             // 显示左侧隐藏的菜单
             this.$bus.$emit("initSuccess", true);

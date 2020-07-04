@@ -29,6 +29,7 @@ export default class Answer {
     // 文档原文地址
     url: string
     constructor(obj: any) {
+      debugger
       this.id = obj.id
       this.authorName = obj.author.name
       this.authorImg = obj.author.avatar_url_template.replace('{size}', 'hd')

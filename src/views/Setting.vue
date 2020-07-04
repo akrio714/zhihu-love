@@ -22,7 +22,7 @@
         >
           <a-select-option
             v-for="searchItem in searchList"
-            :value="{ id: searchItem.id, type: searchItem.type }"
+            :value="searchItem.id"
             :key="searchItem.id"
             >{{ searchItem.question }}（{{
               `共有${searchItem.answerCount}条`
@@ -103,7 +103,7 @@ import { Ref, Component } from "vue-property-decorator";
 import { FormModel } from "ant-design-vue";
 @Component({})
 export default class SettingPage extends Vue {
-  @Ref("postSettingForm")
+  @Ref("settingsForm")
   settingsForm!: FormModel;
   labelCol = { span: 3 };
   wrapperCol = { span: 20 };
@@ -122,7 +122,7 @@ export default class SettingPage extends Vue {
    * 保存按钮点击
    */
   async onSubmitClick() {
-    this.settingsForm.validate(async (valid) => {
+    this.settingsForm.validate(async valid => {
       if (valid) {
         try {
           this.$bus.$emit("showLoading", true);

@@ -71,7 +71,7 @@
 <script lang="ts">
 import Vue from "vue";
 import PostSettingVo from "../services/model/PostSettingVo";
-import { getQuestionBy, checkUrlBy } from "../services/PostService";
+import { checkUrlBy } from "../services/PostService";
 import { shell } from "electron";
 import {
   saveOrUpdatePostSetting,

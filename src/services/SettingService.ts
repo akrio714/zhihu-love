@@ -6,15 +6,13 @@ import {
   getQuestionInfoBy,
   getQuestionBy,
   getClubBy,
+  SearchClubListParams,
+  searchClubList,
 } from "../services/PostService";
 import moment from "moment";
 import PostSettingVo, { PostSettingType } from "./model/PostSettingVo";
 export const SETTING_FORM = "SETTING_FORM";
-import _ from 'lodash';
-export class SettingFormSearch {
-  id = "";
-  type = PostSettingType.Answer;
-}
+import _ from "lodash";
 /**
  * 保存setting的表单数据
  */
@@ -22,7 +20,7 @@ export class SettingForm {
   autoUpdate = true; // 是否自动更新数据
   notification = false; // 是否开启系统通知显示
   max = 1; // 分析帖子的数量
-  searchList: SettingFormSearch[] = []; // 需要用户分析的帖子的id
+  searchList: string[] = []; // 需要用户分析的帖子的id
   updated = new Date().getTime(); // 上次更新时间
 }
 /**
@@ -48,43 +46,64 @@ export async function saveSetting(
   let needReloadPost = false;
   // 如果没有历史记录 或者帖子，拉取数量，排序条件发生改变，那么就重新拉取帖子
   if (oldForm) {
-    needReloadPost = _.isEqual(oldForm.searchList,form.searchList) || oldForm.max !== form.max;
+    needReloadPost =
+      _.isEqual(oldForm.searchList, form.searchList) ||
+      oldForm.max !== form.max;
     // 判断是否需要从新拉帖子
     if (needReloadPost) {
-      // 初始化查询answer查询条件
-      let searchParams = new SearchAnswerListParams();
-      searchParams.searchId = form.searchList[0].id;
-      let list: any[] = [];
       // 计算截止时间
       const abortTime = moment()
         .subtract(form.max, "months")
         .unix();
-      // 无限循环
-      for (let i = 0; true; i += searchParams.limit) {
-        // 预设当前查询条件
-        searchParams.offset = i;
-        // 查询获取分页答案
-        const result = await searchAnswerList(searchParams);
-
-        // 通过回调将当前请求数量进行返回
-        if (scheduleCallback) {
-          scheduleCallback(i, result.paging.totals);
+      // 数据的保存项
+      let list: any[] = [];
+      for (let k = 0; k < form.searchList.length - 1; k++) {
+        const searchId = form.searchList[k]
+        const searchList = await getPostSettingList();
+        const currentSearch = searchList.find(s => s.id === searchId);
+        if(!currentSearch){
+          throw new Error('前端错误，没找到当前id对应的帖子')
         }
-        // 是否数据全部拉取成功的标识
-        let isEnd = result.paging.is_end;
-        // 循环验证时间是否符合标准
-        result.data.forEach((item: any) => {
-          // 晚于截止时间的帖子插入list
-          if (item.updated_time > abortTime) {
-            list.push(item);
+        // 初始化查询answer查询条件
+        let searchParams:
+          | SearchAnswerListParams
+          | SearchClubListParams = new SearchAnswerListParams();
+        // 判断如果当前id的类型是club则new club
+        if(currentSearch.type === PostSettingType.Club){
+          searchParams = new SearchClubListParams()
+        }
+        searchParams.searchId = searchId;
+        // 无限循环
+        for (let i = 0; true; i += searchParams.limit) {
+          // 预设当前查询条件
+          searchParams.offset = i;
+          let result: any = {};
+          if (searchParams instanceof SearchAnswerListParams) {
+            // 查询获取分页答案
+            result = await searchAnswerList(searchParams);
           } else {
-            // 因为是按照时间排序，如果出现早于截止得情况则说明后面也都早于，则进行跳出
-            isEnd = true;
-            return false;
+            result = await searchClubList(searchParams);
           }
-        });
-        if (isEnd) {
-          break;
+          // 通过回调将当前请求数量进行返回
+          if (scheduleCallback) {
+            scheduleCallback(i, result.paging.totals);
+          }
+          // 是否数据全部拉取成功的标识
+          let isEnd = result.paging.is_end;
+          // 循环验证时间是否符合标准
+          result.data.forEach((item: any) => {
+            // 晚于截止时间的帖子插入list
+            if (item.updated_time > abortTime) {
+              list.push(item);
+            } else {
+              // 因为是按照时间排序，如果出现早于截止得情况则说明后面也都早于，则进行跳出
+              isEnd = true;
+              return false;
+            }
+          });
+          if (isEnd) {
+            break;
+          }
         }
       }
       // 清空之前选项
@@ -151,7 +170,7 @@ export async function saveOrUpdatePostSetting(form: PostSettingVo) {
     await db.postSettings.insert(form);
     return form;
   }
-  throw new Error(`系统错误，没有找到qId(${form.id})对应的文章`);
+  throw new Error(`系统错误，没有找到Id(${form.id})对应的文章`);
 }
 /**
  * 删除关注的帖子
