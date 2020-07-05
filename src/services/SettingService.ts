@@ -53,11 +53,11 @@ export async function saveSetting(
     if (needReloadPost) {
       // 计算截止时间
       const abortTime = moment()
-        .subtract(form.max, "months")
+        .subtract(form.max, "days") // todo 别忘改回月
         .unix();
       // 数据的保存项
       let list: any[] = [];
-      for (let k = 0; k < form.searchList.length - 1; k++) {
+      for (let k = 0; k < form.searchList.length; k++) {
         const searchId = form.searchList[k]
         const searchList = await getPostSettingList();
         const currentSearch = searchList.find(s => s.id === searchId);
@@ -93,7 +93,7 @@ export async function saveSetting(
           // 循环验证时间是否符合标准
           result.data.forEach((item: any) => {
             // 晚于截止时间的帖子插入list
-            if (item.updated_time > abortTime) {
+            if ((item.updated_time || item.created_at) > abortTime) {
               list.push(item);
             } else {
               // 因为是按照时间排序，如果出现早于截止得情况则说明后面也都早于，则进行跳出
