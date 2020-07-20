@@ -19,7 +19,7 @@
     "axios": "^0.19.2",
     "core-js": "^3.6.4",
     "electron-builder": "^22.6.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "moment": "^2.25.1",
     "nedb-promises": "^4.0.3",
     "swiper": "^5.3.8",
