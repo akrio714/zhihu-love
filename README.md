@@ -8,8 +8,11 @@
 
 windows 暂未支持
 
-[macos](https://github.com/akrio714/zhihu-love/releases)
+[下载](https://github.com/akrio714/zhihu-love/releases)
 
+macos:下载.dmg后缀版
+
+windows:下载.exe后缀版
 
 
 ##  使用手册
