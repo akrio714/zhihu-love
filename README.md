@@ -6,7 +6,6 @@
 
 ##  下载
 
-windows 暂未支持
 
 [下载](https://github.com/akrio714/zhihu-love/releases)
 
