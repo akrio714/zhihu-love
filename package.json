@@ -22,7 +22,7 @@
     "lodash": "^4.17.15",
     "moment": "^2.25.1",
     "nedb-promises": "^4.0.3",
-    "swiper": "^5.3.8",
+    "swiper": "^6.5.1",
     "vue": "^2.6.11",
     "vue-awesome-swiper": "^4.1.1",
     "vue-bus-ts": "^1.0.8",
